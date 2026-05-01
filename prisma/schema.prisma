@@ -21,9 +21,14 @@ generator client {
 }
 
 datasource db {
+  // Vercel-Supabase Marketplace integration injects these env names.
+  // POSTGRES_PRISMA_URL is the transaction pooler with pgbouncer=true
+  // (correct runtime URL for Prisma Client).
+  // POSTGRES_URL_NON_POOLING is the direct connection used for
+  // migrations only (pooler doesn't support DDL).
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model Project {
