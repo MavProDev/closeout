@@ -1,4 +1,4 @@
-import { CheckCircle2, GitCommit, MinusCircle, ShieldCheck } from "lucide-react"
+import { CheckCircle2, GitCommit, MinusCircle, Network, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 
 import { META } from "@/lib/copy"
@@ -122,6 +122,54 @@ export default function BuildNotesPage() {
           <code className="rounded bg-secondary px-1.5 py-0.5 text-[0.85em]">in_progress → complete</code>{" "}
           (the worker proves the fix), not on the verified transition (different actor, no new photo).
           Reopen path is wired so a rejected verified item flows back to in_progress with timestamps cleared.
+        </p>
+      </Section>
+
+      <Section
+        title="Pattern: the abstraction underneath"
+        icon={<Network className="h-4 w-4" />}
+      >
+        <p>
+          The punch list workflow is the same finite state machine as a
+          project intake QA flow with photo gating. Same shape, different
+          surface. Both are linear progressions through {" "}
+          <code className="rounded bg-secondary px-1.5 py-0.5 text-[0.85em]">
+            open → in_progress → complete → verified
+          </code>{" "}
+          with a photo-evidence gate at the worker-to-reviewer handoff and a
+          reopen path when the reviewer rejects.
+        </p>
+        <p>
+          Once you see this shape, three feature tickets collapse into one
+          piece of code:
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            <strong className="text-foreground">Punch list items</strong>{" "}
+            (this app) — defect → fix → completion photo → GC sign-off.
+          </li>
+          <li>
+            <strong className="text-foreground">Project intake QA</strong> —
+            scope draft → field walk → photo verification → PM sign-off.
+          </li>
+          <li>
+            <strong className="text-foreground">Change-order approvals</strong>{" "}
+            — request → estimate → cost-impact photo → owner sign-off.
+          </li>
+        </ul>
+        <p>
+          That&apos;s why{" "}
+          <code className="rounded bg-secondary px-1.5 py-0.5 text-[0.85em]">
+            lib/state.ts
+          </code>{" "}
+          is a pure-functions module with no React, no Prisma, no I/O — it
+          can be reused by any of those flows verbatim. Adding a state, a
+          transition, or a gate is a one-line edit in one file. Validators,
+          UI copy, and pill colors derive from it. That&apos;s the
+          abstraction worth pulling out before building both apps; it
+          eliminates three future tickets and prevents the eventual drift
+          where two state machines diverge slightly and become impossible
+          to reconcile.
         </p>
       </Section>
 
