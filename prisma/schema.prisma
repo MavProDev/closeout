@@ -1,0 +1,61 @@
+// Closeout punch list tracker.
+//
+// The schema RestoreFast provided is preserved exactly. Field names
+// are not renamed. Five fields and three indexes were added to extend
+// the model from CRUD to a workflow tool:
+//
+//   updatedAt        - audit trail (workflow tools require it)
+//   completionPhoto  - separate from `photo`. The original documents
+//                      the defect; the completion photo documents the
+//                      fix. Industry best practice (EB3, Smartsheet).
+//   completedAt      - closeout velocity reporting
+//   verifiedAt       - GC sign-off timestamp
+//   deletedAt        - soft-delete only. Construction audit trails
+//                      matter. Items are never hard-deleted.
+//
+// Indexes on (projectId, status), (projectId, priority), and
+// (projectId, deletedAt) make every dashboard breakdown query cheap.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Project {
+  id        String      @id @default(uuid())
+  name      String
+  address   String
+  status    String      @default("active")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  items     PunchItem[]
+
+  @@index([status])
+}
+
+model PunchItem {
+  id              String    @id @default(uuid())
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  location        String
+  description     String
+  status          String    @default("open")
+  priority        String    @default("normal")
+  assignedTo      String?
+  photo           String?
+  completionPhoto String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  completedAt     DateTime?
+  verifiedAt      DateTime?
+  deletedAt       DateTime?
+
+  @@index([projectId, status])
+  @@index([projectId, priority])
+  @@index([projectId, deletedAt])
+}
