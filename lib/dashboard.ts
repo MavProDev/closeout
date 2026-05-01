@@ -27,6 +27,7 @@ export interface ProjectDashboard {
   byStatus: BreakdownEntry<ItemStatus>[]
   byPriority: BreakdownEntry<ItemPriority>[]
   byAssignee: BreakdownEntry<string>[]
+  byLocation: BreakdownEntry<string>[]
 }
 
 /**
@@ -37,29 +38,37 @@ export interface ProjectDashboard {
 export async function getProjectDashboard(
   projectId: string,
 ): Promise<ProjectDashboard> {
-  const [statusRows, priorityRows, assigneeRows, totalRow] = await Promise.all([
-    prisma.punchItem.groupBy({
-      by: ["status"],
-      where: { projectId, deletedAt: null },
-      _count: { _all: true },
-    }),
-    prisma.punchItem.groupBy({
-      by: ["priority"],
-      where: { projectId, deletedAt: null },
-      _count: { _all: true },
-    }),
-    prisma.punchItem.groupBy({
-      by: ["assignedTo"],
-      where: { projectId, deletedAt: null, NOT: { assignedTo: null } },
-      _count: { _all: true },
-      orderBy: { _count: { assignedTo: "desc" } },
-      take: 5,
-    }),
-    prisma.punchItem.aggregate({
-      where: { projectId, deletedAt: null },
-      _count: { _all: true },
-    }),
-  ])
+  const [statusRows, priorityRows, assigneeRows, locationRows, totalRow] =
+    await Promise.all([
+      prisma.punchItem.groupBy({
+        by: ["status"],
+        where: { projectId, deletedAt: null },
+        _count: { _all: true },
+      }),
+      prisma.punchItem.groupBy({
+        by: ["priority"],
+        where: { projectId, deletedAt: null },
+        _count: { _all: true },
+      }),
+      prisma.punchItem.groupBy({
+        by: ["assignedTo"],
+        where: { projectId, deletedAt: null, NOT: { assignedTo: null } },
+        _count: { _all: true },
+        orderBy: { _count: { assignedTo: "desc" } },
+        take: 5,
+      }),
+      prisma.punchItem.groupBy({
+        by: ["location"],
+        where: { projectId, deletedAt: null },
+        _count: { _all: true },
+        orderBy: { _count: { location: "desc" } },
+        take: 6,
+      }),
+      prisma.punchItem.aggregate({
+        where: { projectId, deletedAt: null },
+        _count: { _all: true },
+      }),
+    ])
 
   const statusCounts = new Map(
     statusRows.map((r) => [r.status as ItemStatus, r._count._all]),
@@ -91,6 +100,14 @@ export async function getProjectDashboard(
       count: r._count._all,
     }))
 
+  // Top locations by item count. The spec called for this breakdown
+  // by name; we cap at 6 to keep the card scannable on a phone.
+  const byLocation: BreakdownEntry<string>[] = locationRows.map((r) => ({
+    key: r.location,
+    label: r.location,
+    count: r._count._all,
+  }))
+
   const totalItems = totalRow._count._all
   const verifiedItems = statusCounts.get("verified") ?? 0
   const completedItems = statusCounts.get("complete") ?? 0
@@ -111,6 +128,7 @@ export async function getProjectDashboard(
     byStatus,
     byPriority,
     byAssignee,
+    byLocation,
   }
 }
 

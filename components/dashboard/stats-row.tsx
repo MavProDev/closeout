@@ -28,7 +28,7 @@ export function StatsRow({ dashboard, className }: StatsRowProps) {
   return (
     <div
       className={cn(
-        "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4",
+        "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3",
         className,
       )}
     >
@@ -102,6 +102,14 @@ export function StatsRow({ dashboard, className }: StatsRowProps) {
         total={dashboard.totalItems}
         colorFor={() => "var(--color-primary)"}
         emptyText="No assignments yet."
+      />
+
+      <BreakdownBar
+        title="By location"
+        entries={dashboard.byLocation}
+        total={dashboard.totalItems}
+        colorFor={() => "var(--color-status-complete)"}
+        emptyText="No items yet."
       />
     </div>
   )
