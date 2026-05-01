@@ -13,6 +13,10 @@ export const metadata: Metadata = {
   description: META.home.description,
 }
 
+// Home reads the project list at request time. Prerendering would
+// require the DB at build time, which we don't want.
+export const dynamic = "force-dynamic"
+
 export default async function HomePage() {
   const projects = await listProjects()
 

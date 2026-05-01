@@ -16,6 +16,8 @@ import { formatDate, formatRelativeTime } from "@/lib/utils"
 
 import type { Metadata } from "next"
 
+export const dynamic = "force-dynamic"
+
 interface PageProps {
   params: Promise<{ projectId: string; itemId: string }>
 }

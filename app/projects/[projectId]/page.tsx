@@ -1,4 +1,5 @@
 import { MapPin } from "lucide-react"
+import type { Route } from "next"
 import { notFound } from "next/navigation"
 
 import { StatsRow } from "@/components/dashboard/stats-row"
@@ -18,6 +19,8 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 import type { Metadata } from "next"
+
+export const dynamic = "force-dynamic"
 
 interface PageProps {
   params: Promise<{ projectId: string }>
@@ -161,7 +164,7 @@ export default async function ProjectDetailPage({
       </section>
 
       <FloatingActionButton
-        href={`/projects/${project.id}/items/new` as never}
+        href={`/projects/${project.id}/items/new` as Route}
         label="Add item"
       />
     </div>

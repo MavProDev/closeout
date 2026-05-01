@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import type { Route } from "next"
 import { useSearchParams } from "next/navigation"
 
 import { TABS } from "@/lib/copy"
@@ -38,10 +39,11 @@ export function StatusTabs({
       {TAB_ORDER.map((tab) => {
         const isActive = active === tab
         const count = tab === "all" ? total : counts[tab as ItemStatus]
-        const href =
+        const href = (
           tab === "all"
             ? `/projects/${projectId}`
             : `/projects/${projectId}?status=${tab}`
+        ) as Route
         return (
           <Link
             key={tab}
