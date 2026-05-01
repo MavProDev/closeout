@@ -109,13 +109,13 @@ describe("requiresCompletionPhoto", () => {
 
 describe("requiresAssignee", () => {
   it("required for in_progress, complete, verified destinations", () => {
-    expect(requiresAssignee("open", "in_progress")).toBe(true)
-    expect(requiresAssignee("in_progress", "complete")).toBe(true)
-    expect(requiresAssignee("complete", "verified")).toBe(true)
+    expect(requiresAssignee("in_progress")).toBe(true)
+    expect(requiresAssignee("complete")).toBe(true)
+    expect(requiresAssignee("verified")).toBe(true)
   })
 
   it("not required when reopening back to open", () => {
-    expect(requiresAssignee("in_progress", "open")).toBe(false)
+    expect(requiresAssignee("open")).toBe(false)
   })
 })
 

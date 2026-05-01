@@ -72,7 +72,7 @@ export default async function ProjectDetailPage({
       deletedAt: null,
       ...(filter !== "all" ? { status: filter } : {}),
     },
-    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    orderBy: [{ createdAt: "desc" }],
     select: {
       id: true,
       projectId: true,
@@ -90,11 +90,26 @@ export default async function ProjectDetailPage({
     },
   })
 
-  const itemCards: ItemCardData[] = items.map((i) => ({
-    ...i,
-    status: i.status as ItemStatus,
-    priority: i.priority as ItemPriority,
-  }))
+  // Sort by lifecycle position (open → in_progress → complete → verified)
+  // then createdAt desc within each bucket. Prisma `orderBy: status` is
+  // alphabetical, which is the wrong reading order for a punch list.
+  const STATUS_RANK: Record<ItemStatus, number> = {
+    open: 0,
+    in_progress: 1,
+    complete: 2,
+    verified: 3,
+  }
+  const itemCards: ItemCardData[] = items
+    .map((i) => ({
+      ...i,
+      status: i.status as ItemStatus,
+      priority: i.priority as ItemPriority,
+    }))
+    .sort((a, b) => {
+      const rank = STATUS_RANK[a.status] - STATUS_RANK[b.status]
+      if (rank !== 0) return rank
+      return b.createdAt.getTime() - a.createdAt.getTime()
+    })
 
   const statusCounts = ITEM_STATUSES.reduce(
     (acc, s) => {

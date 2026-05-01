@@ -3,6 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
+import { AssignWorkerInline } from "@/components/punch-list/assign-worker-inline"
 import {
   PriorityPill,
   StatusPill,
@@ -83,6 +84,15 @@ export default async function ItemDetailPage({ params }: PageProps) {
       </section>
 
       <section className="surface mt-6 p-5">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          Assignment
+        </h2>
+        <div className="mt-3">
+          <AssignWorkerInline itemId={item.id} current={item.assignedTo} />
+        </div>
+      </section>
+
+      <section className="surface mt-4 p-5">
         <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           Audit trail
         </h2>

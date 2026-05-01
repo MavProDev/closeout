@@ -73,28 +73,33 @@ export async function transitionStatus(
   const { itemId, fromStatus, toStatus, completionPhoto, assignedTo } =
     parsed.data
 
-  // 1. The state machine must permit this transition.
   if (!canTransition(fromStatus, toStatus)) {
     return { ok: false, error: VALIDATION_ERRORS.invalidTransition }
   }
 
-  // 2. The completion-photo gate: only on in_progress -> complete.
   if (requiresCompletionPhoto(fromStatus, toStatus) && !completionPhoto) {
     return { ok: false, error: VALIDATION_ERRORS.missingPhoto }
   }
 
-  // 3. Assignee required for any active or completed state.
-  // We check the in-flight payload first, then fall back to the row.
+  // Read the current row to validate assignee presence and to know which
+  // path to revalidate on success. We also use it to widen the optimistic
+  // concurrency WHERE clause so a parallel assignee update in another tab
+  // doesn't get clobbered.
   const existing = await prisma.punchItem.findUnique({
     where: { id: itemId },
-    select: { assignedTo: true, projectId: true },
+    select: {
+      assignedTo: true,
+      projectId: true,
+      deletedAt: true,
+    },
   })
-  if (!existing) {
+  if (!existing || existing.deletedAt) {
     return { ok: false, error: "Item not found." }
   }
+
   const effectiveAssignee = assignedTo ?? existing.assignedTo
   if (
-    requiresAssignee(fromStatus, toStatus) &&
+    requiresAssignee(toStatus) &&
     (!effectiveAssignee || effectiveAssignee.trim() === "")
   ) {
     return { ok: false, error: VALIDATION_ERRORS.missingAssignee }
@@ -102,11 +107,18 @@ export async function transitionStatus(
 
   const effects = transitionSideEffects(fromStatus, toStatus)
 
-  // 4. Optimistic concurrency. The WHERE clause matches the expected
-  //    fromStatus, so concurrent transitions in another tab fail
-  //    atomically (count === 0).
+  // Optimistic concurrency. The WHERE clause matches BOTH the expected
+  // fromStatus AND the expected assignee value — so a concurrent
+  // transition or a concurrent assignment in another tab fails this
+  // update atomically (count === 0). Then we surface staleState to the
+  // user so they can refresh.
   const result = await prisma.punchItem.updateMany({
-    where: { id: itemId, status: fromStatus, deletedAt: null },
+    where: {
+      id: itemId,
+      status: fromStatus,
+      assignedTo: existing.assignedTo,
+      deletedAt: null,
+    },
     data: {
       status: toStatus,
       ...(completionPhoto !== undefined ? { completionPhoto } : {}),

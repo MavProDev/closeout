@@ -85,9 +85,13 @@ export function TransitionDialog({
 
   function pick(to: ItemStatus) {
     const needsPhoto = requiresCompletionPhoto(currentStatus, to)
-    const needsAssignee =
-      requiresAssignee(currentStatus, to) && !hasAssignee
-    if (!needsPhoto && !needsAssignee) {
+    const needsAssignee = requiresAssignee(to) && !hasAssignee
+    // Reopen paths (* -> in_progress from a non-open state, or
+    // verified -> in_progress) always show a confirm step so the user
+    // sees the audit-trail copy before timestamps clear.
+    const isReopen =
+      to === "in_progress" && currentStatus !== "open"
+    if (!needsPhoto && !needsAssignee && !isReopen) {
       void submit(to, null, null)
       return
     }

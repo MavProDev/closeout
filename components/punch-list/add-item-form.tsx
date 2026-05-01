@@ -76,7 +76,7 @@ export function AddItemForm({ projectId, onCreated }: AddItemFormProps) {
           autoComplete="off"
         />
         {fieldErrors?.location && (
-          <p className="text-sm text-destructive">{fieldErrors.location[0]}</p>
+          <p className="text-sm text-destructive">{fieldErrors.location?.[0]}</p>
         )}
       </div>
 
@@ -92,7 +92,7 @@ export function AddItemForm({ projectId, onCreated }: AddItemFormProps) {
         />
         {fieldErrors?.description && (
           <p className="text-sm text-destructive">
-            {fieldErrors.description[0]}
+            {fieldErrors.description?.[0]}
           </p>
         )}
       </div>

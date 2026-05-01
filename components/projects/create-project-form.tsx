@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createProject } from "@/lib/actions/projects"
-import { SUCCESS_TOASTS } from "@/lib/copy"
 import type { ActionResult } from "@/lib/validators"
 
 function SubmitButton() {
@@ -21,19 +20,18 @@ function SubmitButton() {
 }
 
 export function CreateProjectForm() {
-  const [state, formAction] = useActionState<ActionResult<{ id: string }> | null, FormData>(
-    async (prev, formData) => {
-      const result = await createProject(prev, formData)
-      // The action redirects on success, so we only see the result here on error.
-      if (!result.ok) {
-        toast.error(result.error)
-      } else {
-        toast.success(SUCCESS_TOASTS.projectCreated)
-      }
-      return result
-    },
-    null,
-  )
+  const [state, formAction] = useActionState<
+    ActionResult<{ id: string }> | null,
+    FormData
+  >(async (prev, formData) => {
+    const result = await createProject(prev, formData)
+    // The action redirects on success — `redirect()` throws — so we
+    // only ever see this branch on validation/runtime failure.
+    if (!result.ok) {
+      toast.error(result.error)
+    }
+    return result
+  }, null)
 
   const fieldErrors = state && !state.ok ? state.fieldErrors : undefined
 
@@ -53,7 +51,7 @@ export function CreateProjectForm() {
         />
         {fieldErrors?.name && (
           <p id="name-error" className="text-sm text-destructive">
-            {fieldErrors.name[0]}
+            {fieldErrors.name?.[0]}
           </p>
         )}
       </div>
@@ -71,7 +69,7 @@ export function CreateProjectForm() {
         />
         {fieldErrors?.address && (
           <p id="address-error" className="text-sm text-destructive">
-            {fieldErrors.address[0]}
+            {fieldErrors.address?.[0]}
           </p>
         )}
       </div>

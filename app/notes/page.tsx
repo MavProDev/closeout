@@ -136,6 +136,16 @@ export default function BuildNotesPage() {
           <li>Supabase RLS policies configured even without auth, ready for v2 scoping</li>
           <li>29 unit tests on the state machine (every transition exhaustively covered)</li>
         </ul>
+        <p className="mt-3 text-sm text-muted-foreground">
+          One spec extension worth calling out:{" "}
+          <code className="rounded bg-secondary px-1.5 py-0.5 text-[0.85em]">
+            Project → PunchItem
+          </code>{" "}
+          uses <code className="rounded bg-secondary px-1.5 py-0.5 text-[0.85em]">onDelete: Cascade</code>.
+          That keeps the FK clean if a project is ever hard-deleted, which the
+          UI never does (items are soft-deleted, projects stay forever). The
+          cascade is a safety net for direct DB cleanup, not a UI affordance.
+        </p>
       </Section>
 
       <Section title="What we cut and why" icon={<MinusCircle className="h-4 w-4" />}>

@@ -1,0 +1,16 @@
+# Force LF for all text files in the repo. Local working copies on
+# Windows can still have CRLF, but the committed bytes are LF — keeps
+# the diff clean and Linux CI happy.
+* text=auto eol=lf
+
+# Binary types.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.heic binary
+*.ico binary
+*.pdf binary
+
+# Lockfile pinned for reproducibility, but no diff noise.
+pnpm-lock.yaml linguist-generated=true

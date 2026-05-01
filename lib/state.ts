@@ -63,10 +63,7 @@ export function requiresCompletionPhoto(
  * Items being or having been worked on must have an assignee.
  * The `* -> open` reopen path is the only assignee-free transition.
  */
-export function requiresAssignee(
-  _from: ItemStatus,
-  to: ItemStatus,
-): boolean {
+export function requiresAssignee(to: ItemStatus): boolean {
   return to === "in_progress" || to === "complete" || to === "verified"
 }
 
