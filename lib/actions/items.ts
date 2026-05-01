@@ -37,7 +37,7 @@ function formError(
 // ---------------------------------------------------------------- create
 
 export async function createItem(
-  _prev: ActionResult | null,
+  _prev: ActionResult<{ id: string }> | null,
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = CreateItemInput.safeParse({

@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 
+import { SiteFooter } from "@/components/layout/site-footer"
+import { SiteHeader } from "@/components/layout/site-header"
+import { Toaster } from "@/components/ui/sonner"
 import { APP } from "@/lib/copy"
 
 import "./globals.css"
@@ -58,7 +61,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="min-h-dvh bg-background text-foreground antialiased">
-        {children}
+        <SiteHeader />
+        <main>{children}</main>
+        <SiteFooter />
+        <Toaster richColors closeButton position="top-center" />
       </body>
     </html>
   )

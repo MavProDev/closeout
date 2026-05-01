@@ -8,7 +8,7 @@ import { CreateProjectInput } from "@/lib/validators"
 import type { ActionResult } from "@/lib/validators"
 
 export async function createProject(
-  _prev: ActionResult | null,
+  _prev: ActionResult<{ id: string }> | null,
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = CreateProjectInput.safeParse({

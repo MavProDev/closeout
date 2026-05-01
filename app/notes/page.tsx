@@ -1,0 +1,220 @@
+import { CheckCircle2, GitCommit, MinusCircle, ShieldCheck } from "lucide-react"
+import Link from "next/link"
+
+import { META } from "@/lib/copy"
+
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: META.notes.title,
+  description: META.notes.description,
+}
+
+const CUTS: { name: string; reason: string }[] = [
+  {
+    name: "Framer Motion",
+    reason:
+      "Native CSS transitions and the View Transitions API cover every animation in this app. ~30 KB of bundle saved. If we ever need orchestrated multi-element timelines, motion goes back in.",
+  },
+  {
+    name: "Recharts (or any chart library)",
+    reason:
+      "Four breakdown views, all proportional bars. Pure CSS divs with width transitions render faster, look identical, and add zero dependencies.",
+  },
+  {
+    name: "react-hook-form",
+    reason:
+      "Native HTML forms + Server Actions + Zod give type-safe validation and progressive enhancement out of the box. No client state library required.",
+  },
+  {
+    name: "Vercel Blob",
+    reason:
+      "RestoreFast's stack is Supabase. Photos go to Supabase Storage so the entire data plane lives in one provider — fewer secrets, simpler RLS story.",
+  },
+  {
+    name: "Neon Postgres",
+    reason:
+      "Same reason. Supabase's Postgres + connection pooler is the contract. Adding Neon would have meant operating two database providers.",
+  },
+  {
+    name: "An auth library (NextAuth / Clerk / etc.)",
+    reason:
+      "V1 is single-tenant demo. Supabase RLS policies are configured anyway, so plugging in real auth is a one-day job: scope each policy to auth.uid() and add a sign-in route.",
+  },
+  {
+    name: "Custom illustrations for empty states",
+    reason:
+      "Plain text + clear CTA outperformed every illustration prototype. Foremen want functional, not Pinterest.",
+  },
+]
+
+const DEFERRED: { name: string; why: string }[] = [
+  {
+    name: "Worker as a real table with FK on assignedTo",
+    why: "Currently a denormalized string. Easy upgrade: extract Worker, migrate, change UI to autocomplete from the table.",
+  },
+  {
+    name: "Trigger.dev background job to flag stale items",
+    why: "Punch items past their due date should auto-flag for foreman attention. RestoreFast's stack already includes Trigger.dev — natural V2.",
+  },
+  {
+    name: "Plan markup overlay (drop pins on a floor plan)",
+    why: "The gold-standard punch list UX. Out of scope for the take-home but the obvious next-feature.",
+  },
+  {
+    name: "Real-time sync via Supabase Realtime",
+    why: "Multi-foreman collaboration. RLS + Realtime channels per project are 50 lines.",
+  },
+  {
+    name: "Rate limiting on item creation and photo upload",
+    why: "Production-only concern. Upstash Redis on the Edge is the standard answer when this app is multi-tenant.",
+  },
+  {
+    name: "tRPC for the API layer",
+    why: "Server Actions are the right answer at this size. tRPC earns its keep when the API surface gets large enough that an RPC contract pays for itself.",
+  },
+]
+
+const OVERRIDES: { title: string; body: string }[] = [
+  {
+    title: "Stack mismatch (planning round 1)",
+    body: "Claude proposed Next.js + Prisma + Neon Postgres + Vercel Blob in the first plan. Looked polished. Industry-default. The job listing names Supabase explicitly. Refactored before any code shipped. Lesson: AI produces confident output without verifying full context.",
+  },
+  {
+    title: "Photo gate on the wrong transition (planning round 2)",
+    body: "Claude initially gated the completion-photo requirement on complete → verified. Wrong actor. The worker uploads proof when they finish the work (in_progress → complete); the GC sign-off (complete → verified) is a separate inspection with no new photo. Caught on a forced logic audit. Lesson: confident-sounding state machines still need actor-by-actor review.",
+  },
+  {
+    title: "Stale runtime pin (this build)",
+    body: "Plan locked .nvmrc to Node 20. Today is April 2026. Node 20 (Iron) hit EOL this month. Caught it before scaffolding, bumped to Node 22 (Jod LTS). Lesson: plans go stale; pin against drift only when you re-verify the rationale.",
+  },
+  {
+    title: "Stale framework pin (this build)",
+    body: "Same plan locked Tailwind v3 for shadcn compatibility. shadcn shipped full Tailwind v4 support a few months back. Asked for an explicit override and went with current Next 16 + Tailwind v4. Lesson: pin to spirit (lock against drift), not to letter (a snapshot from when the plan was written).",
+  },
+]
+
+export default function BuildNotesPage() {
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        Transparency page
+      </p>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+        Build notes
+      </h1>
+      <p className="mt-3 max-w-2xl text-muted-foreground">
+        Every shipped product trades velocity against scope. Below is
+        the honest list of what survived, what got cut, and where the
+        AI tried to drift before a human caught it. RestoreFast asked
+        what we traded for shipping speed; this is the answer.
+      </p>
+
+      <Section title="The four-state insight" icon={<ShieldCheck className="h-4 w-4" />}>
+        <p>
+          The schema RestoreFast supplied has a workflow constraint hiding in plain sight.
+          {" "}<code className="rounded bg-secondary px-1.5 py-0.5 text-[0.85em]">open / in_progress / complete</code>{" "}
+          is not enough states for a real construction punch list. The industry uses four. The fourth is{" "}
+          <strong className="text-foreground">verified</strong>: the GC or owner sign-off after physical reinspection. Without it, a worker can mark their own work complete with no proof.
+        </p>
+        <p>
+          The completion photo is gated on{" "}
+          <code className="rounded bg-secondary px-1.5 py-0.5 text-[0.85em]">in_progress → complete</code>{" "}
+          (the worker proves the fix), not on the verified transition (different actor, no new photo).
+          Reopen path is wired so a rejected verified item flows back to in_progress with timestamps cleared.
+        </p>
+      </Section>
+
+      <Section title="What's in V1" icon={<CheckCircle2 className="h-4 w-4" />}>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>Next.js 16 App Router on Vercel, React 19, TypeScript strict</li>
+          <li>Supabase Postgres via Prisma 6 with the four-state extension and three indexes</li>
+          <li>Server Actions with Zod validation and optimistic concurrency on every transition</li>
+          <li>Supabase Storage for photos, signed upload URLs, HEIC → JPEG client-side conversion, 1600 px max edge compression</li>
+          <li>shadcn/ui on Tailwind v4, custom construction-utilitarian palette, View Transitions API</li>
+          <li>Mobile-first PWA shell with manifest, theme-color, 44 px tap targets</li>
+          <li>Supabase RLS policies configured even without auth, ready for v2 scoping</li>
+          <li>29 unit tests on the state machine (every transition exhaustively covered)</li>
+        </ul>
+      </Section>
+
+      <Section title="What we cut and why" icon={<MinusCircle className="h-4 w-4" />}>
+        <ul className="space-y-3">
+          {CUTS.map((c) => (
+            <li key={c.name} className="surface p-3">
+              <p className="font-medium">{c.name}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{c.reason}</p>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="What's deliberately deferred" icon={<GitCommit className="h-4 w-4" />}>
+        <ul className="space-y-3">
+          {DEFERRED.map((d) => (
+            <li key={d.name} className="surface p-3">
+              <p className="font-medium">{d.name}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{d.why}</p>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="Override moments (where the human caught the AI)" icon={<ShieldCheck className="h-4 w-4" style={{ color: "var(--color-gold)" }} />}>
+        <ol className="space-y-3">
+          {OVERRIDES.map((o, i) => (
+            <li key={o.title} className="surface p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                #{i + 1}
+              </p>
+              <p className="mt-1 font-medium">{o.title}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{o.body}</p>
+            </li>
+          ))}
+        </ol>
+      </Section>
+
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+        <p>
+          Source:{" "}
+          <a
+            href="https://github.com/MavProDev/closeout"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline-offset-4 hover:text-foreground hover:underline"
+          >
+            github.com/MavProDev/closeout
+          </a>
+        </p>
+        <Link
+          href="/audits"
+          className="underline-offset-4 hover:text-foreground hover:underline"
+        >
+          See the audit results →
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+function Section({
+  title,
+  icon,
+  children,
+}: {
+  title: string
+  icon: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <section className="mt-8">
+      <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+        <span className="grid h-6 w-6 place-items-center rounded-md bg-secondary text-primary">
+          {icon}
+        </span>
+        {title}
+      </h2>
+      <div className="mt-3 space-y-3 text-sm leading-relaxed">{children}</div>
+    </section>
+  )
+}
