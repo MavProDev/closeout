@@ -1,4 +1,4 @@
-import { MapPin } from "lucide-react"
+import { CheckCircle2, MapPin } from "lucide-react"
 import type { Route } from "next"
 import { notFound } from "next/navigation"
 
@@ -154,6 +154,39 @@ export default async function ProjectDetailPage({
           </span>
         </div>
       </header>
+
+      {isClosed && (
+        <section
+          className="mt-4 flex items-start gap-3 rounded-md border p-4 text-sm"
+          style={{
+            background:
+              "color-mix(in oklab, var(--color-status-verified) 8%, var(--color-card))",
+            borderColor:
+              "color-mix(in oklab, var(--color-status-verified) 40%, transparent)",
+          }}
+          role="status"
+          aria-live="polite"
+        >
+          <CheckCircle2
+            className="mt-0.5 h-5 w-5 shrink-0"
+            style={{ color: "var(--color-status-verified)" }}
+            aria-hidden
+          />
+          <div className="space-y-0.5">
+            <p
+              className="font-semibold"
+              style={{ color: "var(--color-status-verified)" }}
+            >
+              Closed for retainage release
+            </p>
+            <p className="text-muted-foreground">
+              All {dashboard.totalItems} items signed off by GC. Reopening
+              any verified item rolls the project back to active and
+              creates an audit-trail entry on the affected item.
+            </p>
+          </div>
+        </section>
+      )}
 
       <section className="mt-4">
         <StatsRow dashboard={dashboard} />
