@@ -1,26 +1,279 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  Closeout — Tailwind v4 theme.
+  Two @theme blocks merge: the first maps construction-utilitarian
+  palette onto shadcn's semantic token names so primitives render
+  correctly; the second adds Closeout-specific domain tokens for
+  status pills, priority badges, and animation keyframes.
+
+  To add a status: edit ITEM_STATUSES in lib/state.ts, add a
+  --color-status-X token here, and add a .pill[data-status="X"] rule.
+  Three-line change end-to-end.
+*/
+
+@theme {
+  --color-background: #0e0e0c;
+  --color-foreground: #e8e6e0;
+
+  --color-card: #1a1a17;
+  --color-card-foreground: #e8e6e0;
+
+  --color-popover: #22221e;
+  --color-popover-foreground: #e8e6e0;
+
+  --color-primary: #ff6b35;
+  --color-primary-foreground: #1a0d05;
+
+  --color-secondary: #22221e;
+  --color-secondary-foreground: #e8e6e0;
+
+  --color-muted: #1a1a17;
+  --color-muted-foreground: #8a8780;
+
+  --color-accent: #22221e;
+  --color-accent-foreground: #e8e6e0;
+
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+
+  --color-border: #2a2a26;
+  --color-input: #2a2a26;
+  --color-ring: #ff6b35;
+
+  --radius: 6px;
+  --radius-sm: 4px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "JetBrains Mono",
+    SFMono-Regular, Menlo, monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@theme {
+  /* Status pill colors — the four-state model. */
+  --color-status-open: #6b7280;
+  --color-status-in_progress: #fbbf24;
+  --color-status-complete: #3b82f6;
+  --color-status-verified: #4ade80;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* Priority badge colors. */
+  --color-priority-low: #6b7280;
+  --color-priority-normal: #8a8780;
+  --color-priority-high: #fbbf24;
+  --color-priority-critical: #ef4444;
+
+  /* Gold for the GC sign-off action — visually distinct from the rest
+     of the UI to mark the workflow gate. */
+  --color-gold: #d4a017;
+  --color-gold-hover: #e6b22a;
+  --color-gold-foreground: #1a1208;
+
+  /* Animation tokens. Tailwind v4 generates `animate-fade-in` etc.
+     from these. Tokens-as-API: change duration here, every consumer
+     picks it up. */
+  --animate-fade-in: fade-in 200ms ease-out;
+  --animate-fade-in-scale: fade-in-scale 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-up: slide-up 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-pill-pulse: pill-pulse 600ms ease-out;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+
+  @keyframes fade-in {
+    from { opacity: 0 }
+    to { opacity: 1 }
+  }
+  @keyframes fade-in-scale {
+    from { opacity: 0; transform: scale(0.96) }
+    to { opacity: 1; transform: scale(1) }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(8px) }
+    to { opacity: 1; transform: translateY(0) }
+  }
+  @keyframes pill-pulse {
+    0% { box-shadow: 0 0 0 0 currentColor; opacity: 0.6 }
+    100% { box-shadow: 0 0 0 10px transparent; opacity: 0 }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0 }
+    100% { background-position: 200% 0 }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-background);
+  }
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100dvh;
+  }
+  ::selection {
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+  }
+  *:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  /* Mobile tap-target hardening — 44px is Apple HIG minimum. */
+  @media (pointer: coarse) {
+    button,
+    a[role="button"],
+    [data-tap] {
+      min-height: 44px;
+    }
+  }
+
+  /*
+    View Transitions API — the WOW pill click. Modern browsers run
+    a real cross-fade-and-morph animation when the URL changes;
+    older browsers fall back to instant swap. Zero JS dependency.
+  */
+  @view-transition {
+    navigation: auto;
+  }
+  ::view-transition-group(*) {
+    animation-duration: 220ms;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@layer utilities {
+  /* Status pill — parameterized by data-status attribute. */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 9999px;
+    border: 1px solid var(--color-border);
+    padding: 0.25rem 0.625rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition:
+      background-color 200ms ease,
+      border-color 200ms ease,
+      color 200ms ease,
+      transform 120ms ease;
+    user-select: none;
+    white-space: nowrap;
+    position: relative;
+  }
+  button.pill,
+  [role="button"].pill {
+    cursor: pointer;
+  }
+  button.pill:hover,
+  [role="button"].pill:hover {
+    transform: translateY(-1px);
+  }
+  button.pill:active,
+  [role="button"].pill:active {
+    transform: translateY(0) scale(0.97);
+  }
+
+  .pill[data-status="open"] {
+    background: color-mix(in oklab, var(--color-status-open) 18%, transparent);
+    border-color: color-mix(in oklab, var(--color-status-open) 45%, transparent);
+    color: var(--color-status-open);
+  }
+  .pill[data-status="in_progress"] {
+    background: color-mix(in oklab, var(--color-status-in_progress) 18%, transparent);
+    border-color: color-mix(in oklab, var(--color-status-in_progress) 50%, transparent);
+    color: var(--color-status-in_progress);
+  }
+  .pill[data-status="complete"] {
+    background: color-mix(in oklab, var(--color-status-complete) 18%, transparent);
+    border-color: color-mix(in oklab, var(--color-status-complete) 50%, transparent);
+    color: var(--color-status-complete);
+  }
+  .pill[data-status="verified"] {
+    background: color-mix(in oklab, var(--color-status-verified) 18%, transparent);
+    border-color: color-mix(in oklab, var(--color-status-verified) 55%, transparent);
+    color: var(--color-status-verified);
+  }
+
+  .pill[data-priority="low"],
+  .pill[data-priority="normal"] {
+    background: color-mix(in oklab, var(--color-priority-normal) 14%, transparent);
+    border-color: color-mix(in oklab, var(--color-priority-normal) 35%, transparent);
+    color: var(--color-priority-normal);
+  }
+  .pill[data-priority="high"] {
+    background: color-mix(in oklab, var(--color-priority-high) 18%, transparent);
+    border-color: color-mix(in oklab, var(--color-priority-high) 45%, transparent);
+    color: var(--color-priority-high);
+  }
+  .pill[data-priority="critical"] {
+    background: color-mix(in oklab, var(--color-priority-critical) 18%, transparent);
+    border-color: color-mix(in oklab, var(--color-priority-critical) 50%, transparent);
+    color: var(--color-priority-critical);
+    overflow: hidden;
+  }
+  .pill[data-priority="critical"]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--color-priority-critical) 25%, transparent),
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+    pointer-events: none;
+  }
+
+  /* Construction-tool card surface. */
+  .surface {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+  }
+
+  /* Construction-grade hatched background. Used sparingly on header
+     strips to evoke a survey-stake or caution-tape texture. */
+  .hatched {
+    background-image:
+      linear-gradient(135deg, var(--color-border) 25%, transparent 25%),
+      linear-gradient(225deg, var(--color-border) 25%, transparent 25%),
+      linear-gradient(45deg, var(--color-border) 25%, transparent 25%),
+      linear-gradient(315deg, var(--color-border) 25%, transparent 25%);
+    background-position: 8px 0, 8px 0, 0 0, 0 0;
+    background-size: 16px 16px;
+    background-color: var(--color-card);
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+}
+
+/* Respect the user's OS reduced-motion setting — disable WOW
+   animations for accessibility. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }
