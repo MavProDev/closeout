@@ -38,20 +38,43 @@ export function StatsRow({ dashboard, className }: StatsRowProps) {
           label="verified"
           size={88}
         />
-        <div className="min-w-0">
+        <div className="min-w-0 space-y-1">
           <h3 className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             Completion
           </h3>
-          <p className="mt-1 text-2xl font-semibold tabular-nums">
+          <p className="text-2xl font-semibold tabular-nums">
             {dashboard.verifiedItems}
             <span className="text-muted-foreground">
               {" "}
               / {dashboard.totalItems}
             </span>
           </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            items GC-signed-off
-          </p>
+          <ul className="space-y-0.5 text-xs text-muted-foreground">
+            {dashboard.completedItems > 0 && (
+              <li
+                className="tabular-nums"
+                style={{ color: "var(--color-status-complete)" }}
+              >
+                {dashboard.completedItems} awaiting sign-off
+              </li>
+            )}
+            {dashboard.inProgressItems > 0 && (
+              <li
+                className="tabular-nums"
+                style={{ color: "var(--color-status-in_progress)" }}
+              >
+                {dashboard.inProgressItems} in progress
+              </li>
+            )}
+            {dashboard.openItems > 0 && (
+              <li className="tabular-nums">
+                {dashboard.openItems} open
+              </li>
+            )}
+            {dashboard.totalItems === 0 && (
+              <li>No items yet.</li>
+            )}
+          </ul>
         </div>
       </section>
 
