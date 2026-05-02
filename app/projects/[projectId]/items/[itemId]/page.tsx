@@ -135,7 +135,7 @@ export default async function ItemDetailPage({ params }: PageProps) {
                 />
               }
             >
-              <span className="text-muted-foreground">GC sign-off:</span>{" "}
+              <span className="text-muted-foreground">Signed off:</span>{" "}
               {formatDate(item.verifiedAt)} ·{" "}
               <span style={{ color: "var(--color-status-verified)" }}>
                 {STATUS_LABELS.verified}

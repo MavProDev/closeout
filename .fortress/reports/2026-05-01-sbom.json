@@ -12,7 +12,7 @@
       "type": "application",
       "name": "closeout",
       "version": "0.1.0",
-      "description": "Punch list tracker for the RestoreFast Deployment Engineer take-home."
+      "description": "Punch list and closeout tracker for general contractors and restoration teams."
     }
   },
   "components": [

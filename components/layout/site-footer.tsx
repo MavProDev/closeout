@@ -14,7 +14,7 @@ export function SiteFooter({ className }: SiteFooterProps) {
     >
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 px-4 text-xs text-muted-foreground sm:flex-row sm:justify-between sm:px-6">
         <p>
-          Built for the RestoreFast Deployment Engineer take-home.
+          A punch list and closeout tracker for GCs and restoration teams.
         </p>
         <p>
           <a

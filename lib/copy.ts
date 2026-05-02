@@ -24,10 +24,10 @@ function resolveAppUrl(): string {
 export const APP = {
   name: "Closeout",
   shortName: "Closeout",
-  tagline: "Punch list tracker",
+  tagline: "Punch list & closeout tracker",
   description:
-    "A punch list tracker for general contractors with the four-state model and photo-gated completion.",
-  ogTitle: "Closeout, punch list tracker",
+    "A punch list and closeout tracker for general contractors and restoration teams. Four-state workflow with photo-gated completion and audit-trail timestamps from defect through sign-off.",
+  ogTitle: "Closeout, punch list & closeout tracker",
   url: resolveAppUrl(),
 } as const
 
@@ -42,9 +42,9 @@ export const STATUS_DESCRIPTIONS: Record<ItemStatus, string> = {
   open: "Defect identified, not yet assigned or in progress.",
   in_progress: "Worker assigned and addressing the defect.",
   complete:
-    "Worker has uploaded a completion photo. Awaiting GC sign-off.",
+    "Work uploaded with photo evidence. Awaiting GC, owner, or adjuster sign-off.",
   verified:
-    "GC or owner has signed off. Closed for retainage release.",
+    "Signed off and closed. Ready for billing or retainage release.",
 }
 
 export const PRIORITY_LABELS: Record<ItemPriority, string> = {
@@ -65,16 +65,16 @@ export const TRANSITION_DIALOG = {
   toComplete: {
     title: "Mark complete",
     description:
-      "Upload a photo of the completed work. The GC or owner will inspect and sign off.",
+      "Upload a photo of the completed work. The GC, owner, or adjuster will inspect and sign off.",
     confirm: "Mark complete",
     photoLabel: "Completion photo",
     photoHelp:
       "A clear photo of the fix. This becomes the audit-trail evidence at sign-off.",
   },
   toVerified: {
-    title: "Sign off as GC or Owner",
+    title: "Sign off",
     description:
-      "This is the final acceptance step. Once verified, this item is closed for retainage release. Reopening a verified item is possible but creates an audit-trail entry.",
+      "Final acceptance. Once verified, this item is closed for billing or retainage release. Reopening a verified item is possible but creates an audit-trail entry.",
     confirm: "Mark verified",
     cancel: "Cancel",
   },

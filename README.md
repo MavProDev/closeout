@@ -1,25 +1,29 @@
 # Closeout
 
-Punch list tracker built for the RestoreFast Deployment Engineer take-home.
+A punch list and closeout tracker for general contractors and restoration
+teams. Four-state workflow with photo-gated completion and audit-trail
+timestamps from defect through sign-off.
 
 **Live:** https://closeout-murex.vercel.app
 **Repo:** https://github.com/MavProDev/closeout
 **Build notes & cuts:** https://closeout-murex.vercel.app/notes
+**Overrides (where the human caught the AI):** https://closeout-murex.vercel.app/overrides
 **Audit results:** https://closeout-murex.vercel.app/audits
 
 ---
 
 ## The insight
 
-The schema RestoreFast supplied has a workflow constraint hiding in plain
+The take-home schema has a workflow constraint hiding in plain
 sight, and the spec hints at it. `open / in_progress / complete` is not
 enough states for a real construction punch list. The industry uses four.
-The fourth is **verified** — the GC's or owner's sign-off after physical
-reinspection. Without it, a worker can mark their own work complete with no
-proof. Smartsheet, EB3, Kahua, and Fieldwire all converge on this model;
-EB3 stated it directly: they do not mark items complete based solely on
-contractor reports or photographic evidence. Each verified correction
-receives formal sign-off, creating a permanent record of acceptance.
+The fourth is **verified** — sign-off from the GC, owner, or insurance
+adjuster after physical reinspection. Without it, a worker can mark their
+own work complete with no proof. Smartsheet, EB3, Kahua, and Fieldwire all
+converge on this model; EB3 stated it directly: they do not mark items
+complete based solely on contractor reports or photographic evidence. Each
+verified correction receives formal sign-off, creating a permanent record
+of acceptance.
 
 The completion photo is gated on `in_progress -> complete` (the worker
 proves the fix), not on `complete -> verified` (different actor — GC sign
@@ -37,13 +41,13 @@ Sonner · Vercel. Provisioning via the **Vercel-Supabase Marketplace
 integration** so secrets auto-flow into the Vercel project — no manual
 copy/paste.
 
-This matches RestoreFast's listed stack one-to-one. tRPC, Trigger.dev,
-Stripe, and Twilio are deliberately out of V1 scope (see
-[/notes](https://closeout-murex.vercel.app/notes) for the cut list).
+tRPC, durable-workflow runners, Stripe, and Twilio are deliberately out of
+V1 scope (see [/notes](https://closeout-murex.vercel.app/notes) for the cut
+list).
 
 ## What I added to the schema (and why)
 
-The original RestoreFast field names are preserved exactly. Six field
+The original take-home field names are preserved exactly. Six field
 extensions and three indexes turn the model from CRUD into a workflow tool.
 
 | Addition | Reason |
@@ -164,23 +168,39 @@ brings up the full schema automatically.
 
 ## What I would build next
 
-7 features I'd ship in V2, ordered by user-impact-per-engineering-hour:
+Features I'd ship in V2, ordered by user-impact-per-engineering-hour:
 
-1. **Worker as a real table.** `assignedTo` becomes a foreign key. Unlocks
-   per-worker dashboards, per-worker mobile views, role-based access.
-2. **Trigger.dev background job to auto-flag stale `in_progress` items**
-   past their due date. The schema already has `updatedAt`. RestoreFast's
-   stack already includes Trigger.dev — natural V2.
-3. **Plan markup overlay.** Drop pins on a floor plan PDF. The gold-standard
-   punch-list UX. Out of scope for the take-home but the obvious next move.
-4. **Real auth with Supabase RLS scoping per-project access.** RLS policies
-   are already in V1 — auth.uid() scoping is a one-line edit per policy.
-5. **Rate limiting on item creation and photo upload.** Upstash Redis on the
-   Edge. Skipped in V1 deliberately for demo speed.
-6. **tRPC for the API layer.** Server Actions are the right answer at this
-   size. tRPC earns its keep when the API surface gets large enough that an
-   RPC contract pays for itself.
-7. **Realtime sync via Supabase Realtime channels** for multi-foreman
+1. **Worker as a real table with cert metadata.** `assignedTo` becomes a
+   foreign key with attached certifications, home base, and active-job
+   count. Unlocks per-worker dashboards, mobile views scoped to the
+   signed-in field worker, role-based access, and the auto-dispatch
+   feature below.
+2. **Auto-dispatch by certification, location, and current load.** Once
+   Worker exists, a Server Action picks the best assignee for a new item
+   by closest-fit on (certs ∩ scope) + capacity + travel time. Mostly
+   rule-based heuristics; LLM tiebreak only when two workers are
+   dead-even.
+3. **Multi-tenant scoping (per-org RLS).** Auth + auth.uid() + an org
+   column per table. RLS policies are already committed; adding the org
+   dimension is a one-line policy change per table. One instance, every
+   regional crew, no cross-org bleed.
+4. **Insurance / audit export — one-click closeout PDF.** Sealed per-project
+   PDF: photo log, transition timestamps, assignee per item, sign-off
+   page. The four-state model already encodes everything; this is just
+   a server-side render.
+5. **Background job to auto-flag stale `in_progress` items** past their due
+   date. Anything queue-shaped fits — durable workflow runner, cron +
+   worker, or a hosted scheduler. A 24h sweep against `updatedAt +
+   dueDate` is the V2.
+6. **Plan markup overlay.** Drop pins on a floor plan PDF. The
+   gold-standard punch-list UX. Out of scope for the take-home but the
+   obvious next move.
+7. **Rate limiting on item creation and photo upload.** Upstash Redis on
+   the Edge. Skipped in V1 deliberately for demo speed.
+8. **tRPC for the API layer.** Server Actions are the right answer at
+   this size. tRPC earns its keep when the API surface gets large enough
+   that an RPC contract pays for itself.
+9. **Realtime sync via Supabase Realtime channels** for multi-foreman
    collaboration. RLS + per-project channels are ~50 lines.
 
 ## AI tools used

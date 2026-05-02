@@ -2,7 +2,7 @@
   "name": "closeout",
   "version": "0.1.0",
   "private": true,
-  "description": "Punch list tracker for the RestoreFast Deployment Engineer take-home.",
+  "description": "Punch list and closeout tracker for general contractors and restoration teams. Four-state workflow with photo-gated completion and audit-trail timestamps.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

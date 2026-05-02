@@ -32,7 +32,7 @@ const CUTS: { name: string; reason: string }[] = [
   {
     name: "Vercel Blob",
     reason:
-      "RestoreFast's stack is Supabase. Photos go to Supabase Storage so the entire data plane lives in one provider — fewer secrets, simpler RLS story.",
+      "Photos live in Supabase Storage so the entire data plane sits in one provider — fewer secrets, simpler RLS story, less surface area to operate.",
   },
   {
     name: "Neon Postgres",
@@ -53,20 +53,28 @@ const CUTS: { name: string; reason: string }[] = [
 
 const DEFERRED: { name: string; why: string }[] = [
   {
-    name: "Authentication (Supabase Auth + RLS scoping per project)",
-    why: "V1 is single-tenant demo. RLS policies are committed in prisma/migrations/20260501170000_rls_and_storage_policies — auth.uid() scoping is a one-line change per policy when sessions land.",
+    name: "Multi-tenant scoping (per-org RLS)",
+    why: "V1 is single-tenant demo. RLS policies are committed in prisma/migrations/20260501170000_rls_and_storage_policies — adding auth.uid() and an org column is a one-line policy change per table when sessions land. Designed so a single instance can host every regional crew without cross-org data bleed.",
+  },
+  {
+    name: "Auto-dispatch by certification, location, and current load",
+    why: "Once Worker becomes a real table (next item) it accrues certifications (water-cat, mold containment, electrical), home base, and an active-job count. Server Action picks the best assignee for a new item by closest-fit on (certs ∩ scope) + capacity + travel time. Mostly heuristics; LLM tiebreak only when two workers are dead-even on rules.",
+  },
+  {
+    name: "Worker as a real table with FK on assignedTo + cert metadata",
+    why: "Currently a denormalized string. Easy upgrade: extract Worker, migrate, attach certifications and crew assignments, change UI to autocomplete from the table. Unblocks per-worker dashboards, mobile views scoped to the signed-in field worker, and the auto-dispatch feature above.",
+  },
+  {
+    name: "Insurance / audit export — one-click PDF closeout package",
+    why: "Generate a sealed PDF per project with full photo log, transition timestamps, assignee per item, and a sign-off page. The four-state model already encodes everything needed — just a server-side render. Critical for projects where billing or retainage release depends on a documented audit trail.",
   },
   {
     name: "Rate limiting on /api/upload + Server Actions",
     why: "V1 demo on Vercel free tier with synthetic data has zero real cost exposure. Adding token-bucket rate limiting (Vercel Runtime Cache or Upstash Redis, keyed by IP) is the right call the day there are real paying users — a deliberate first-principles cut, not an oversight.",
   },
   {
-    name: "Worker as a real table with FK on assignedTo",
-    why: "Currently a denormalized string. Easy upgrade: extract Worker, migrate, change UI to autocomplete from the table.",
-  },
-  {
-    name: "Trigger.dev background job to flag stale items",
-    why: "Punch items past their due date should auto-flag for foreman attention. RestoreFast's stack already includes Trigger.dev — natural V2.",
+    name: "Background job to flag stale items past their due date",
+    why: "Items past their due date should auto-flag for foreman attention. Anything queue-shaped — durable workflow runner, cron + worker, or a hosted scheduler — is a fit. Schema already has updatedAt; a 24h sweep is the V2.",
   },
   {
     name: "Plan markup overlay (drop pins on a floor plan)",
@@ -127,10 +135,10 @@ export default function BuildNotesPage() {
 
       <Section title="The four-state insight" icon={<ShieldCheck className="h-4 w-4" />}>
         <p>
-          The schema RestoreFast supplied has a workflow constraint hiding in plain sight.
+          The take-home schema has a workflow constraint hiding in plain sight.
           {" "}<code className="rounded bg-secondary px-1.5 py-0.5 text-[0.85em]">open / in_progress / complete</code>{" "}
           is not enough states for a real construction punch list. The industry uses four. The fourth is{" "}
-          <strong className="text-foreground">verified</strong>: the GC or owner sign-off after physical reinspection. Without it, a worker can mark their own work complete with no proof.
+          <strong className="text-foreground">verified</strong>: the GC, owner, or adjuster sign-off after physical reinspection. Without it, a worker can mark their own work complete with no proof.
         </p>
         <p>
           The completion photo is gated on{" "}
@@ -151,17 +159,26 @@ export default function BuildNotesPage() {
           <code className="rounded bg-secondary px-1.5 py-0.5 text-[0.85em]">
             open → in_progress → complete → verified
           </code>{" "}
-          with a photo-evidence gate at the worker-to-reviewer handoff and a
-          reopen path when the reviewer rejects.
+          with a photo-evidence gate at the worker-to-reviewer handoff
+          and a reopen path when the reviewer rejects. Photo evidence at
+          the handoff is the universal pattern wherever insurance, code
+          compliance, or third-party billing depends on documented
+          completion.
         </p>
         <p>
-          Once you see this shape, three feature tickets collapse into one
+          Once you see this shape, four feature tickets collapse into one
           piece of code:
         </p>
         <ul className="list-disc space-y-1 pl-5">
           <li>
             <strong className="text-foreground">Punch list items</strong>{" "}
-            (this app) — defect → fix → completion photo → GC sign-off.
+            (this app) — defect → fix → completion photo → sign-off.
+          </li>
+          <li>
+            <strong className="text-foreground">Restoration loss workflow</strong>
+            {" "}— scope with damage photos → mitigation in progress → completion
+            with verification photo (insurance-required) → adjuster sign-off
+            for billing.
           </li>
           <li>
             <strong className="text-foreground">Project intake QA</strong> —

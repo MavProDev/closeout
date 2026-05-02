@@ -1,6 +1,6 @@
 // Closeout punch list tracker.
 //
-// The schema RestoreFast provided is preserved exactly. Field names
+// The original take-home schema is preserved exactly. Field names
 // are not renamed. Five fields and three indexes were added to extend
 // the model from CRUD to a workflow tool:
 //

@@ -46,8 +46,8 @@ export default async function HomePage() {
           </h1>
           <p className="mt-3 max-w-2xl text-muted-foreground">
             Defects open. Workers fix. Workers prove the fix with a
-            photo. The GC signs off. Real construction, real audit
-            trail. Built for the RestoreFast take-home.
+            photo. The GC signs off. Real construction and restoration
+            work, real audit trail.
           </p>
           <ul className="mt-6 grid grid-cols-1 gap-3 text-sm text-muted-foreground sm:grid-cols-3">
             <li className="surface flex items-start gap-2 p-3">
@@ -57,7 +57,7 @@ export default async function HomePage() {
               />
               <span>
                 <strong className="text-foreground">Open → In progress → Complete → Verified.</strong>
-                {" "}Photo gate on the third arrow. GC sign-off on the fourth.
+                {" "}Photo gate on the third arrow. Sign-off (GC, owner, or adjuster) on the fourth.
               </span>
             </li>
             <li className="surface flex items-start gap-2 p-3">
