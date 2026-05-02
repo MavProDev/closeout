@@ -131,7 +131,12 @@ export const META = {
   notes: {
     title: "Build notes — Closeout",
     description:
-      "What we shipped, what we cut, what we deferred, and the override moments where the human caught the AI.",
+      "What we shipped, what we cut, and what we deliberately deferred for v1.",
+  },
+  overrides: {
+    title: "Overrides — Closeout",
+    description:
+      "Where the human caught the AI drifting, and the human signature embedded in the demo.",
   },
   audits: {
     title: "Audits — Closeout",

@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   description: META.notes.description,
 }
 
+// Override moments and the "human signature" 12th-photo note moved
+// to /overrides — they earned their own surface in the top nav.
+
 const CUTS: { name: string; reason: string }[] = [
   {
     name: "Framer Motion",
@@ -99,25 +102,6 @@ const DEFERRED: { name: string; why: string }[] = [
   },
 ]
 
-const OVERRIDES: { title: string; body: string }[] = [
-  {
-    title: "Stack mismatch (planning round 1)",
-    body: "Claude proposed Next.js + Prisma + Neon Postgres + Vercel Blob in the first plan. Looked polished. Industry-default. The job listing names Supabase explicitly. Refactored before any code shipped. Lesson: AI produces confident output without verifying full context.",
-  },
-  {
-    title: "Photo gate on the wrong transition (planning round 2)",
-    body: "Claude initially gated the completion-photo requirement on complete → verified. Wrong actor. The worker uploads proof when they finish the work (in_progress → complete); the GC sign-off (complete → verified) is a separate inspection with no new photo. Caught on a forced logic audit. Lesson: confident-sounding state machines still need actor-by-actor review.",
-  },
-  {
-    title: "Stale runtime pin (this build)",
-    body: "Plan locked .nvmrc to Node 20. Today is April 2026. Node 20 (Iron) hit EOL this month. Caught it before scaffolding, bumped to Node 22 (Jod LTS). Lesson: plans go stale; pin against drift only when you re-verify the rationale.",
-  },
-  {
-    title: "Stale framework pin (this build)",
-    body: "Same plan locked Tailwind v3 for shadcn compatibility. shadcn shipped full Tailwind v4 support a few months back. Asked for an explicit override and went with current Next 16 + Tailwind v4. Lesson: pin to spirit (lock against drift), not to letter (a snapshot from when the plan was written).",
-  },
-]
-
 export default function BuildNotesPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
@@ -128,10 +112,17 @@ export default function BuildNotesPage() {
         Build notes
       </h1>
       <p className="mt-3 max-w-2xl text-muted-foreground">
-        Every shipped product trades velocity against scope. Below is
-        the honest list of what survived, what got cut, and where the
-        AI tried to drift before a human caught it. RestoreFast asked
-        what we traded for shipping speed; this is the answer.
+        Every shipped product trades velocity against scope. Below
+        is the honest list of what survived and what got cut. The
+        moments where the AI drifted and the human caught it live on
+        their own page —{" "}
+        <Link
+          href="/overrides"
+          className="text-primary underline-offset-4 hover:underline"
+        >
+          Overrides
+        </Link>
+        .
       </p>
 
       <Section title="The four-state insight" icon={<ShieldCheck className="h-4 w-4" />}>
@@ -242,20 +233,6 @@ export default function BuildNotesPage() {
         </ul>
       </Section>
 
-      <Section title="Override moments (where the human caught the AI)" icon={<ShieldCheck className="h-4 w-4" style={{ color: "var(--color-gold)" }} />}>
-        <ol className="space-y-3">
-          {OVERRIDES.map((o, i) => (
-            <li key={o.title} className="surface p-3">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                #{i + 1}
-              </p>
-              <p className="mt-1 font-medium">{o.title}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{o.body}</p>
-            </li>
-          ))}
-        </ol>
-      </Section>
-
       <Section
         title="Audit pass — what surfaced, what got fixed, what got documented"
         icon={<ShieldCheck className="h-4 w-4" />}
@@ -293,23 +270,6 @@ export default function BuildNotesPage() {
           bucket today. See the{" "}
           <strong className="text-foreground">deferred</strong> list above
           for each item with its V2 plan.
-        </p>
-      </Section>
-
-      <Section
-        title="Human signature"
-        icon={<CheckCircle2 className="h-4 w-4" style={{ color: "var(--color-gold)" }} />}
-      >
-        <p>
-          The Krusty Krab demo carries 12 punch items. Eleven are
-          straight construction-defect language with the joke
-          hiding in the project name and item locations. The
-          twelfth is mine, by hand: an unauthorized employee-built
-          structure inside the walk-in cooler, blocked egress,
-          scattered product, a top-secret-labeled crate. Reads as
-          a real defect on the first pass. Pays off on the second.
-          Every AI-built submission needs a place where the human
-          built something the AI couldn&apos;t — this is mine.
         </p>
       </Section>
 

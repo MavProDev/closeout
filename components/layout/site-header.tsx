@@ -34,6 +34,12 @@ export function SiteHeader({ className }: SiteHeaderProps) {
             Build notes
           </Link>
           <Link
+            href="/overrides"
+            className="rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            Overrides
+          </Link>
+          <Link
             href="/audits"
             className="rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
