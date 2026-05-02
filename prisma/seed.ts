@@ -10,9 +10,11 @@
  *      with completion photo uploaded, awaiting GC sign-off.
  *
  *   2. Westgate Tower — a six-unit multi-family water-loss closeout.
- *      Realistic restoration vocabulary, no photos (mid-stream punch
- *      list before final docs), demonstrating the app handles text-only
- *      flows where photo evidence comes later in the cycle.
+ *      Realistic restoration vocabulary; defect photos shipped, completion
+ *      photos still null because every item is mid-stream (the photo gate
+ *      sits on in_progress -> complete and the workers haven't uploaded
+ *      proof artifacts yet — exactly what the workflow says happens
+ *      before sign-off).
  *
  * Photo paths point at /public/seed/. Drop AI-generated defect images
  * with those filenames and they resolve automatically.
@@ -196,7 +198,7 @@ const WESTGATE_ITEMS: SeedItem[] = [
     status: "in_progress",
     priority: "high",
     assignedTo: "Marcus T.",
-    photo: null,
+    photo: "/seed/westgate-01-defect.jpg",
     completionPhoto: null,
     daysAgo: 1,
   },
@@ -207,7 +209,7 @@ const WESTGATE_ITEMS: SeedItem[] = [
     status: "open",
     priority: "normal",
     assignedTo: null,
-    photo: null,
+    photo: "/seed/westgate-02-defect.jpg",
     completionPhoto: null,
     daysAgo: 2,
   },
@@ -218,7 +220,7 @@ const WESTGATE_ITEMS: SeedItem[] = [
     status: "in_progress",
     priority: "high",
     assignedTo: "Diana R.",
-    photo: null,
+    photo: "/seed/westgate-03-defect.jpg",
     completionPhoto: null,
     daysAgo: 3,
   },
@@ -229,7 +231,7 @@ const WESTGATE_ITEMS: SeedItem[] = [
     status: "in_progress",
     priority: "high",
     assignedTo: "Sarah B.",
-    photo: null,
+    photo: "/seed/westgate-04-defect.jpg",
     completionPhoto: null,
     daysAgo: 2,
   },
@@ -240,7 +242,7 @@ const WESTGATE_ITEMS: SeedItem[] = [
     status: "in_progress",
     priority: "critical",
     assignedTo: "Marcus T.",
-    photo: null,
+    photo: "/seed/westgate-05-defect.jpg",
     completionPhoto: null,
     daysAgo: 1,
   },
@@ -251,18 +253,15 @@ const WESTGATE_ITEMS: SeedItem[] = [
     status: "in_progress",
     priority: "critical",
     assignedTo: "Diana R.",
-    photo: null,
+    photo: "/seed/westgate-06-defect.jpg",
     completionPhoto: null,
     daysAgo: 0,
   },
   // The next two are deliberately kept at in_progress. The app blocks
   // the in_progress -> complete transition without a completion photo
-  // (lib/actions/items.ts:97), and the Westgate demo has no bundled
-  // restoration imagery yet — promoting them past the photo gate via
-  // direct DB writes would contradict the four-state pattern this app
-  // sells. They sit awaiting their proof artifact, which is exactly
-  // what the workflow says happens before the GC, owner, or adjuster
-  // reviews the work.
+  // (lib/actions/items.ts:97). The defect photos are uploaded; the
+  // worker just hasn't shot the completion photo yet, which is
+  // exactly what the workflow says happens before sign-off.
   {
     location: "Unit 7E, hallway vapor barrier",
     description:
@@ -270,7 +269,7 @@ const WESTGATE_ITEMS: SeedItem[] = [
     status: "in_progress",
     priority: "normal",
     assignedTo: "Tom K.",
-    photo: null,
+    photo: "/seed/westgate-07-defect.jpg",
     completionPhoto: null,
     daysAgo: 4,
   },
@@ -281,7 +280,7 @@ const WESTGATE_ITEMS: SeedItem[] = [
     status: "in_progress",
     priority: "critical",
     assignedTo: "Tom K.",
-    photo: null,
+    photo: "/seed/westgate-08-defect.jpg",
     completionPhoto: null,
     daysAgo: 6,
   },
