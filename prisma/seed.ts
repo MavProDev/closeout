@@ -236,7 +236,7 @@ const WESTGATE_ITEMS: SeedItem[] = [
   {
     location: "Unit 7F, daily moisture log",
     description:
-      "14-hour gap in psychrometric readings overnight day 4 (logger battery failed at 23:14, restored 13:08). Adjuster requires uninterrupted log for billing. Reconstruct from secondary logger or note formal interpolation.",
+      "14-hour gap in psychrometric readings overnight day 4 (logger battery failed at 23:14, restored next day at 13:14). Adjuster requires uninterrupted log for billing. Reconstruct from secondary logger or note formal interpolation.",
     status: "in_progress",
     priority: "critical",
     assignedTo: "Marcus T.",
@@ -255,11 +255,19 @@ const WESTGATE_ITEMS: SeedItem[] = [
     completionPhoto: null,
     daysAgo: 0,
   },
+  // The next two are deliberately kept at in_progress. The app blocks
+  // the in_progress -> complete transition without a completion photo
+  // (lib/actions/items.ts:97), and the Westgate demo has no bundled
+  // restoration imagery yet — promoting them past the photo gate via
+  // direct DB writes would contradict the four-state pattern this app
+  // sells. They sit awaiting their proof artifact, which is exactly
+  // what the workflow says happens before the GC, owner, or adjuster
+  // reviews the work.
   {
     location: "Unit 7E, hallway vapor barrier",
     description:
-      "Vapor barrier seam at west doorway lifting. Re-seam and seal-tape per scope. Photograph completed seam for closer.",
-    status: "complete",
+      "Vapor barrier seam at west doorway lifting. Re-seam and seal-tape per scope. Photograph completed seam for closer before signing off.",
+    status: "in_progress",
     priority: "normal",
     assignedTo: "Tom K.",
     photo: null,
@@ -269,8 +277,8 @@ const WESTGATE_ITEMS: SeedItem[] = [
   {
     location: "East stairwell, level 7 landing",
     description:
-      "Exit sign was removed during ceiling demo and not reinstalled. Code violation if a fire occurred during work hours. Reinstalled, tested, documented; adjuster file annotated.",
-    status: "verified",
+      "Exit sign was removed during ceiling demo and not reinstalled. Code violation if a fire occurred during work hours. Reinstall, test, photograph for adjuster file before sign-off.",
+    status: "in_progress",
     priority: "critical",
     assignedTo: "Tom K.",
     photo: null,
@@ -315,7 +323,7 @@ async function main() {
     })
     if (existing) {
       console.log(`[seed] removing existing demo items for ${proj.name}`)
-      await prisma.punchItem.deleteMany({ where: { projectId: existing.id } })
+      // Project -> PunchItem onDelete: Cascade handles child rows.
       await prisma.project.delete({ where: { id: existing.id } })
     }
 

@@ -33,6 +33,11 @@ interface AuditRun {
 // collapsed to 32 unique after grounding + dedup. Every High that
 // was not a documented V1 cut was fixed in the same session before
 // submission. See /notes for the deferred slate and rationale.
+//
+// 2026-05-02: a follow-up Fortress + Slopcheck delta pass was run
+// after a lean-change commit (broaden positioning, add Westgate
+// Tower demo, lift Overrides to its own page, fix RSC-boundary 500
+// on item detail). Results appended below.
 
 const RUNS: AuditRun[] = [
   {
@@ -230,6 +235,93 @@ const RUNS: AuditRun[] = [
           "File is app/error.tsx (per-segment boundary, per Next convention). The export was named GlobalError, which implies a global-error.tsx scope that doesn't exist in the repo.",
         resolution:
           "Fixed — renamed to RouteError with a comment explaining the scope.",
+      },
+    ],
+  },
+  {
+    name: "Fortress (delta pass)",
+    description:
+      "Focused Fortress re-run after a lean-change commit set: positioning broadened, Westgate Tower demo added, Overrides lifted into its own top-nav page, and a Server-Component-to-Client-Component render-prop boundary fix that had landed a 500 on the item detail route. Goal: confirm the diff added no new attack surface and verify the RSC fix.",
+    runAt: "2026-05-02 (post-lean-changes)",
+    totalFindings: 1,
+    resolved: 1,
+    deferred: 0,
+    frameworks: [
+      "OWASP Web Top 10",
+      "CWE",
+      "React Server Components boundary rules",
+    ],
+    highlights: [
+      {
+        severity: "info",
+        title:
+          "RSC-boundary fix is the textbook minimal solution",
+        detail:
+          "The item detail route was returning 500 with 'Functions cannot be passed directly to Client Components'. Root cause: a Server Component was passing a render-prop function as TransitionDialog's children. Fix introduces a small \"use client\" wrapper (StatusPillTrigger) that owns the render-prop on the client side. Server Component now passes only serializable primitives. ItemCard (already \"use client\") was unaffected and keeps the existing TransitionDialog render-prop API.",
+        resolution:
+          "Fixed — wrapper added, route resolves 200, no new attack surface.",
+      },
+      {
+        severity: "low",
+        title:
+          "Seed had a redundant deleteMany already covered by onDelete: Cascade",
+        detail:
+          "The wipe-and-reseed loop called prisma.punchItem.deleteMany followed by prisma.project.delete. Schema already declares Project ⇢ PunchItem onDelete: Cascade, so the explicit deleteMany was double-work. Dev-script polish only — no security impact.",
+        resolution:
+          "Fixed — deleteMany removed, comment added explaining cascade handles children.",
+      },
+      {
+        severity: "info",
+        title:
+          "5 positive findings — no fix required",
+        detail:
+          "Overrides page is a static read-only Server Component with proper rel=noopener noreferrer on external links and no DB/env/cookie access. New copy strings are author-controlled JSX text (auto-escaped). Westgate seed strings are author-controlled. No new Server Actions or API routes added. Prop surface on the new client wrapper is only primitives + the existing ItemStatus enum.",
+      },
+    ],
+  },
+  {
+    name: "Slopcheck (delta pass)",
+    description:
+      "Focused Slopcheck re-run on the same lean-change diff. Goal: catch any new claims-vs-code drift, fabricated technical vocabulary in the new restoration seed data, tautological copy on the Overrides page, and any AI-slop smells the lean changes might have introduced. Three real findings surfaced; six positive findings confirmed the diff was honest.",
+    runAt: "2026-05-02 (post-lean-changes)",
+    totalFindings: 3,
+    resolved: 3,
+    deferred: 0,
+    frameworks: ["Closeout slop-pattern catalog v1"],
+    highlights: [
+      {
+        severity: "low",
+        title:
+          "README seed-comment drift after Westgate added",
+        detail:
+          "README local-dev block read 'pnpm db:seed   # populate the Krusty Krab demo' but the seed now creates two projects. Same class of finding the original Slopcheck pass caught (comment vs code drift) — auditor flagged it before a reviewer would.",
+        resolution:
+          "Fixed — comment now reads 'populate the Krusty Krab + Westgate Tower demos'.",
+      },
+      {
+        severity: "low",
+        title:
+          "Westgate items in complete/verified states had null completion photos — contradicting the photo gate",
+        detail:
+          "Two Westgate items (vapor barrier, exit sign) seeded as status=complete and status=verified with completionPhoto=null. The app's photo gate (lib/actions/items.ts:97 — requiresCompletionPhoto on in_progress→complete) blocks that transition without a photo, so the seed was bypassing the very rule the four-state model sells. A reviewer poking at the Westgate 'Signed off' item would have seen no proof artifact.",
+        resolution:
+          "Fixed — both items dropped to in_progress with descriptions amended to call out 'photograph for adjuster file before sign-off'. Westgate is now wholly mid-stream on the photo-gate side, consistent with the 'no photos bundled yet' framing.",
+      },
+      {
+        severity: "low",
+        title:
+          "Logger-gap arithmetic was off by six minutes",
+        detail:
+          "Westgate item description claimed '14-hour gap … logger battery failed at 23:14, restored 13:08'. 23:14 → next-day 13:08 is 13h 54m. Real adjuster file notes are precise on time math; rounding casually here would read AI-generated to a careful reader.",
+        resolution:
+          "Fixed — restoration time shifted to 13:14, making the gap exactly 14 hours and the math honest.",
+      },
+      {
+        severity: "info",
+        title:
+          "6 positive findings — restoration vocabulary, test count, abstraction claim, RSC fix, RestoreFast cleanup all verified",
+        detail:
+          "Restoration vocabulary (LGR dehumidifier, psychrometric log, anti-microbial chain-of-custody, vapor-barrier seam, Cat 2 water-loss framing, microbial strip-test + containment plan) is industry-correct, not hallucinated. README and /notes claim of 29 vitest tests still holds (vitest run confirms). The four-state-machine claim on /notes is supported by lib/state.ts's pure-functions design. StatusPillTrigger has no logic duplication. No stray TODO/FIXME/console-debug introduced. Take-home origin remains explicit but no specific company is named anywhere in code, copy, or docs.",
       },
     ],
   },

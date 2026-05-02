@@ -140,7 +140,7 @@ fill the values from the Supabase dashboard, then run:
 
 ```bash
 pnpm db:migrate            # prisma migrate dev
-pnpm db:seed               # populate the Krusty Krab demo
+pnpm db:seed               # populate the Krusty Krab + Westgate Tower demos
 pnpm dev
 ```
 
