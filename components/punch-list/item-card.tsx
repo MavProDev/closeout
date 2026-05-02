@@ -52,7 +52,10 @@ export function ItemCard({ item, className }: ItemCardProps) {
       return
     }
     startTransition(async () => {
-      const result = await softDeleteItem({ itemId: item.id })
+      const result = await softDeleteItem({
+        projectId: item.projectId,
+        itemId: item.id,
+      })
       if (!result.ok) toast.error(result.error)
       else {
         toast.success(SUCCESS_TOASTS.itemDeleted)
@@ -104,6 +107,7 @@ export function ItemCard({ item, className }: ItemCardProps) {
             <div className="flex shrink-0 items-center gap-1.5">
               <PriorityPill priority={item.priority} size="sm" />
               <TransitionDialog
+                projectId={item.projectId}
                 itemId={item.id}
                 currentStatus={item.status}
                 hasAssignee={Boolean(item.assignedTo)}

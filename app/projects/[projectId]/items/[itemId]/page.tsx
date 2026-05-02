@@ -67,6 +67,7 @@ export default async function ItemDetailPage({ params }: PageProps) {
         <div className="flex items-center gap-2">
           <PriorityPill priority={priority} />
           <TransitionDialog
+            projectId={item.project.id}
             itemId={item.id}
             currentStatus={status}
             hasAssignee={Boolean(item.assignedTo)}
@@ -88,7 +89,11 @@ export default async function ItemDetailPage({ params }: PageProps) {
           Assignment
         </h2>
         <div className="mt-3">
-          <AssignWorkerInline itemId={item.id} current={item.assignedTo} />
+          <AssignWorkerInline
+            projectId={item.project.id}
+            itemId={item.id}
+            current={item.assignedTo}
+          />
         </div>
       </section>
 

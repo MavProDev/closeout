@@ -12,6 +12,7 @@ import { assignWorker } from "@/lib/actions/items"
 import { SUCCESS_TOASTS } from "@/lib/copy"
 
 interface AssignWorkerInlineProps {
+  projectId: string
   itemId: string
   current: string | null
 }
@@ -23,6 +24,7 @@ interface AssignWorkerInlineProps {
  * audit trail clearly shows assignment as its own event.
  */
 export function AssignWorkerInline({
+  projectId,
   itemId,
   current,
 }: AssignWorkerInlineProps) {
@@ -37,7 +39,11 @@ export function AssignWorkerInline({
       return
     }
     setSubmitting(true)
-    const result = await assignWorker({ itemId, assignedTo: value.trim() })
+    const result = await assignWorker({
+      projectId,
+      itemId,
+      assignedTo: value.trim(),
+    })
     setSubmitting(false)
     if (!result.ok) {
       toast.error(result.error)

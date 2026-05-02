@@ -52,6 +52,17 @@ export async function createItem(
     return formError(parsed) as ActionResult<{ id: string }>
   }
 
+  // Verify the project exists before inserting — surface a clean
+  // ActionResult instead of letting Prisma's FK violation propagate
+  // to the global error boundary.
+  const project = await prisma.project.findUnique({
+    where: { id: parsed.data.projectId },
+    select: { id: true },
+  })
+  if (!project) {
+    return { ok: false, error: "Project not found." }
+  }
+
   const item = await prisma.punchItem.create({
     data: parsed.data,
     select: { id: true, projectId: true },
@@ -70,8 +81,14 @@ export async function transitionStatus(
   if (!parsed.success) {
     return formError(parsed) as ActionResult<{ status: string }>
   }
-  const { itemId, fromStatus, toStatus, completionPhoto, assignedTo } =
-    parsed.data
+  const {
+    projectId,
+    itemId,
+    fromStatus,
+    toStatus,
+    completionPhoto,
+    assignedTo,
+  } = parsed.data
 
   if (!canTransition(fromStatus, toStatus)) {
     return { ok: false, error: VALIDATION_ERRORS.invalidTransition }
@@ -81,60 +98,79 @@ export async function transitionStatus(
     return { ok: false, error: VALIDATION_ERRORS.missingPhoto }
   }
 
-  // Read the current row to validate assignee presence and to know which
-  // path to revalidate on success. We also use it to widen the optimistic
-  // concurrency WHERE clause so a parallel assignee update in another tab
-  // doesn't get clobbered.
-  const existing = await prisma.punchItem.findUnique({
-    where: { id: itemId },
-    select: {
-      assignedTo: true,
-      projectId: true,
-      deletedAt: true,
-    },
-  })
-  if (!existing || existing.deletedAt) {
-    return { ok: false, error: "Item not found." }
-  }
+  // Wrap read + update in a single transaction with a row-level lock
+  // to close the TOCTOU window between the existence/assignee read
+  // and the optimistic-concurrency write.
+  const result = await prisma.$transaction(async (tx) => {
+    const existing = await tx.$queryRaw<
+      Array<{
+        assignedTo: string | null
+        deletedAt: Date | null
+        projectId: string
+      }>
+    >`
+      SELECT "assignedTo", "deletedAt", "projectId"
+      FROM "PunchItem"
+      WHERE "id" = ${itemId}
+      FOR UPDATE
+    `
+    const row = existing[0]
+    if (!row || row.deletedAt) {
+      return { kind: "not_found" as const }
+    }
+    // Defense-in-depth project scope check — even if the WHERE fails
+    // later, a forged itemId from a different project is rejected
+    // here.
+    if (row.projectId !== projectId) {
+      return { kind: "not_found" as const }
+    }
 
-  const effectiveAssignee = assignedTo ?? existing.assignedTo
-  if (
-    requiresAssignee(toStatus) &&
-    (!effectiveAssignee || effectiveAssignee.trim() === "")
-  ) {
+    const effectiveAssignee = assignedTo ?? row.assignedTo
+    if (
+      requiresAssignee(toStatus) &&
+      (!effectiveAssignee || effectiveAssignee.trim() === "")
+    ) {
+      return { kind: "missing_assignee" as const }
+    }
+
+    const effects = transitionSideEffects(fromStatus, toStatus)
+
+    const update = await tx.punchItem.updateMany({
+      where: {
+        id: itemId,
+        projectId,
+        status: fromStatus,
+        deletedAt: null,
+      },
+      data: {
+        status: toStatus,
+        ...(completionPhoto !== undefined ? { completionPhoto } : {}),
+        ...(effectiveAssignee !== row.assignedTo
+          ? { assignedTo: effectiveAssignee }
+          : {}),
+        ...effects,
+      },
+    })
+
+    return {
+      kind: "ok" as const,
+      count: update.count,
+      projectId: row.projectId,
+    }
+  })
+
+  if (result.kind === "not_found") {
+    return { ok: false, error: VALIDATION_ERRORS.staleState }
+  }
+  if (result.kind === "missing_assignee") {
     return { ok: false, error: VALIDATION_ERRORS.missingAssignee }
   }
-
-  const effects = transitionSideEffects(fromStatus, toStatus)
-
-  // Optimistic concurrency. The WHERE clause matches BOTH the expected
-  // fromStatus AND the expected assignee value — so a concurrent
-  // transition or a concurrent assignment in another tab fails this
-  // update atomically (count === 0). Then we surface staleState to the
-  // user so they can refresh.
-  const result = await prisma.punchItem.updateMany({
-    where: {
-      id: itemId,
-      status: fromStatus,
-      assignedTo: existing.assignedTo,
-      deletedAt: null,
-    },
-    data: {
-      status: toStatus,
-      ...(completionPhoto !== undefined ? { completionPhoto } : {}),
-      ...(effectiveAssignee !== existing.assignedTo
-        ? { assignedTo: effectiveAssignee }
-        : {}),
-      ...effects,
-    },
-  })
-
   if (result.count === 0) {
     return { ok: false, error: VALIDATION_ERRORS.staleState }
   }
 
-  revalidatePath(`/projects/${existing.projectId}`)
-  revalidatePath(`/projects/${existing.projectId}/items/${itemId}`)
+  revalidatePath(`/projects/${result.projectId}`)
+  revalidatePath(`/projects/${result.projectId}/items/${itemId}`)
   return { ok: true, data: { status: toStatus } }
 }
 
@@ -147,16 +183,21 @@ export async function assignWorker(
   if (!parsed.success) {
     return formError(parsed)
   }
-  const { itemId, assignedTo } = parsed.data
+  const { projectId, itemId, assignedTo } = parsed.data
 
-  const item = await prisma.punchItem.update({
-    where: { id: itemId },
+  // updateMany scopes to (id, projectId, deletedAt:null) so soft-deleted
+  // items cannot be reassigned (audit-trail invariant) and an itemId
+  // forged against the wrong project is rejected.
+  const result = await prisma.punchItem.updateMany({
+    where: { id: itemId, projectId, deletedAt: null },
     data: { assignedTo },
-    select: { projectId: true },
   })
+  if (result.count === 0) {
+    return { ok: false, error: "Item not found." }
+  }
 
-  revalidatePath(`/projects/${item.projectId}`)
-  revalidatePath(`/projects/${item.projectId}/items/${itemId}`)
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath(`/projects/${projectId}/items/${itemId}`)
   return { ok: true, data: undefined }
 }
 
@@ -169,13 +210,19 @@ export async function softDeleteItem(
   if (!parsed.success) {
     return formError(parsed)
   }
+  const { projectId, itemId } = parsed.data
 
-  const item = await prisma.punchItem.update({
-    where: { id: parsed.data.itemId },
+  // updateMany with deletedAt:null guard ensures double-delete races
+  // don't overwrite the original deletion timestamp (audit trail
+  // integrity), and that an itemId from another project is rejected.
+  const result = await prisma.punchItem.updateMany({
+    where: { id: itemId, projectId, deletedAt: null },
     data: { deletedAt: new Date() },
-    select: { projectId: true },
   })
+  if (result.count === 0) {
+    return { ok: false, error: "Item not found." }
+  }
 
-  revalidatePath(`/projects/${item.projectId}`)
+  revalidatePath(`/projects/${projectId}`)
   return { ok: true, data: undefined }
 }

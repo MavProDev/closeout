@@ -34,6 +34,7 @@ import {
 import { cn } from "@/lib/utils"
 
 interface TransitionDialogProps {
+  projectId: string
   itemId: string
   currentStatus: ItemStatus
   hasAssignee: boolean
@@ -62,6 +63,7 @@ type Step =
  * sub-step appears for in_progress -> complete (the gate).
  */
 export function TransitionDialog({
+  projectId,
   itemId,
   currentStatus,
   hasAssignee,
@@ -105,6 +107,7 @@ export function TransitionDialog({
   ) {
     setSubmitting(true)
     const result = await transitionStatus({
+      projectId,
       itemId,
       fromStatus: currentStatus,
       toStatus: to,
