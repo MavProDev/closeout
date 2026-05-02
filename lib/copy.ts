@@ -9,6 +9,18 @@
 
 import type { ItemPriority, ItemStatus } from "@/lib/state"
 
+// Drive the canonical URL from Vercel's auto-injected env so
+// preview deploys, branch deploys, and local dev all use the
+// correct origin for OG metadata, manifest, and absolute links.
+function resolveAppUrl(): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  }
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
+  return "http://localhost:3000"
+}
+
 export const APP = {
   name: "Closeout",
   shortName: "Closeout",
@@ -16,7 +28,7 @@ export const APP = {
   description:
     "A punch list tracker for general contractors with the four-state model and photo-gated completion.",
   ogTitle: "Closeout, punch list tracker",
-  url: "https://closeout.vercel.app",
+  url: resolveAppUrl(),
 } as const
 
 export const STATUS_LABELS: Record<ItemStatus, string> = {

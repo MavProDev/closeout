@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect } from "react"
+
 import { Button } from "@/components/ui/button"
 
 export default function GlobalError({
@@ -9,6 +11,13 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  useEffect(() => {
+    // Log the real error server-side. Don't echo error.message into
+    // the user-facing UI — Prisma/Supabase/runtime messages can leak
+    // schema details, paths, or upstream API bodies.
+    console.error("global error", { digest: error.digest })
+  }, [error])
+
   return (
     <main className="mx-auto max-w-2xl px-6 py-20 text-center">
       <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -18,11 +27,12 @@ export default function GlobalError({
         Unexpected error.
       </h1>
       <p className="mt-3 text-muted-foreground">
-        {error.message || "An unexpected error occurred."}
+        Something went wrong on the server. Try again, or refresh the
+        page.
       </p>
       {error.digest && (
         <p className="mt-2 font-mono text-xs text-muted-foreground">
-          {error.digest}
+          Ref: {error.digest}
         </p>
       )}
       <div className="mt-6 flex justify-center gap-2">

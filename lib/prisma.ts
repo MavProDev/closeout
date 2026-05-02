@@ -13,12 +13,16 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
+// Log levels: in dev we want signal but not full SQL bodies (they
+// contain user input including assignee names and free-text
+// descriptions; an accidental screenshot of the dev terminal would
+// leak parameter values). In production only emit errors.
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     log:
       process.env.NODE_ENV === "development"
-        ? ["query", "error", "warn"]
+        ? ["warn", "error"]
         : ["error"],
   })
 

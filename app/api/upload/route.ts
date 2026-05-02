@@ -43,16 +43,18 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await createPhotoUpload(filename, mime)
-    return NextResponse.json(result, { status: 200 })
+    return NextResponse.json(result, {
+      status: 200,
+      headers: { "cache-control": "no-store" },
+    })
   } catch (err) {
+    // Log details server-side; surface a constant message to clients
+    // so probing this endpoint doesn't fingerprint the Supabase
+    // backend or its bucket configuration.
+    console.error("[upload] createPhotoUpload failed", err)
     return NextResponse.json(
-      {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Failed to create upload URL.",
-      },
-      { status: 500 },
+      { error: "Failed to create upload URL." },
+      { status: 500, headers: { "cache-control": "no-store" } },
     )
   }
 }
