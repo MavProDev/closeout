@@ -170,13 +170,68 @@ const RUNS: AuditRun[] = [
   {
     name: "Slopcheck",
     description:
-      "Correctness, legitimacy, and AI-slop pattern audit — the second of the two custom audit frameworks. Verifies that claims match code, that error handling is honest, and that no AI shortcuts ship to production.",
-    runAt: "Pending — runs after Fortress findings settle",
-    totalFindings: 0,
-    resolved: 0,
+      "Correctness, legitimacy, and AI-slop pattern audit. Hunts claims-vs-reality drift, fabricated APIs, tautological tests, redundant defensive checks, comment-vs-code mismatches, and presentation-polish gaps. Single auditor squad ran the 25-pattern catalog plus the master 158-item checklist.",
+    runAt: "2026-05-01 (post-Fortress)",
+    totalFindings: 6,
+    resolved: 6,
     deferred: 0,
     frameworks: ["Closeout slop-pattern catalog v1"],
-    highlights: [],
+    highlights: [
+      {
+        severity: "medium",
+        title:
+          "Tautological tests in the state machine (mirror their own implementation)",
+        detail:
+          "Two test blocks asserted nextStatuses(from) toEqual VALID_TRANSITIONS[from], and canTransition iterated VALID_TRANSITIONS[from] then asserted true — both tautological since the implementation IS those data structures.",
+        resolution:
+          "Fixed — replaced with hardcoded spec literals. If lib/state.ts is changed, the tests now fail loudly instead of passing silently.",
+      },
+      {
+        severity: "medium",
+        title:
+          "Redundant defensive guard in lib/blob.ts — both ALLOWED_MIME and MIME_TO_EXT keyed on identical values",
+        detail:
+          "createPhotoUpload checked ALLOWED_MIME.has(mime) and then if (!ext) on the lookup result. The second branch was unreachable.",
+        resolution:
+          "Fixed — ALLOWED_MIME now derived from Object.keys(MIME_TO_EXT), single source of truth, no drift possible.",
+      },
+      {
+        severity: "low",
+        title:
+          "README optimistic-concurrency code snippet didn't match the shipped implementation",
+        detail:
+          "README showed the older WHERE-clause-with-assignedTo version. The actual code uses prisma.$transaction with SELECT FOR UPDATE.",
+        resolution:
+          "Fixed — README snippet replaced with a faithful excerpt of the transaction-based implementation.",
+      },
+      {
+        severity: "low",
+        title:
+          "Off-by-two field count in README intro to schema additions",
+        detail:
+          "'Four field extensions' — actual count is six (PunchItem.updatedAt, completionPhoto, completedAt, verifiedAt, deletedAt + Project.updatedAt).",
+        resolution:
+          "Fixed — README updated to 'Six field extensions'.",
+      },
+      {
+        severity: "low",
+        title:
+          "ItemPhoto helper duplicated across item card and item detail page",
+        detail:
+          "Two near-identical helpers, divergence-prone. Slop pattern: copy-paste drift.",
+        resolution:
+          "Fixed — extracted to components/punch-list/item-photo.tsx; both call sites import from it.",
+      },
+      {
+        severity: "low",
+        title:
+          "Misleading `GlobalError` name on segment-level error boundary",
+        detail:
+          "File is app/error.tsx (per-segment boundary, per Next convention). The export was named GlobalError, which implies a global-error.tsx scope that doesn't exist in the repo.",
+        resolution:
+          "Fixed — renamed to RouteError with a comment explaining the scope.",
+      },
+    ],
   },
 ]
 
