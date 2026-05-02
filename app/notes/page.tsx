@@ -50,6 +50,14 @@ const CUTS: { name: string; reason: string }[] = [
 
 const DEFERRED: { name: string; why: string }[] = [
   {
+    name: "Authentication (Supabase Auth + RLS scoping per project)",
+    why: "V1 is single-tenant demo. RLS policies are committed in prisma/migrations/20260501170000_rls_and_storage_policies — auth.uid() scoping is a one-line change per policy when sessions land.",
+  },
+  {
+    name: "Rate limiting on /api/upload + Server Actions",
+    why: "V1 demo on Vercel free tier with synthetic data has zero real cost exposure. Adding token-bucket rate limiting (Vercel Runtime Cache or Upstash Redis, keyed by IP) is the right call the day there are real paying users — a deliberate first-principles cut, not an oversight.",
+  },
+  {
     name: "Worker as a real table with FK on assignedTo",
     why: "Currently a denormalized string. Easy upgrade: extract Worker, migrate, change UI to autocomplete from the table.",
   },
@@ -66,12 +74,28 @@ const DEFERRED: { name: string; why: string }[] = [
     why: "Multi-foreman collaboration. RLS + Realtime channels per project are 50 lines.",
   },
   {
-    name: "Rate limiting on item creation and photo upload",
-    why: "Production-only concern. Upstash Redis on the Edge is the standard answer when this app is multi-tenant.",
-  },
-  {
     name: "tRPC for the API layer",
     why: "Server Actions are the right answer at this size. tRPC earns its keep when the API surface gets large enough that an RPC contract pays for itself.",
+  },
+  {
+    name: "Private Storage bucket + signed read URLs",
+    why: "Audit caught this: public-read bucket means non-expiring photo URLs. For V1 demo with synthetic Krusty Krab data the public bucket is the correct cost-perf tradeoff (no per-render signing). When real photos with incidental PII (faces, plates, addresses) arrive, bucket flips to private and lib/blob.ts mints a short-lived signed read URL per render.",
+  },
+  {
+    name: "Replace heic2any with a maintained alternative",
+    why: "heic2any@0.0.4 is the only published version (last release 2020). For V1 the dep works; the migration plan is heic-to or move HEIC→JPEG conversion server-side via Sharp. No CVEs against it today; the concern is the absence of a patch path if one lands.",
+  },
+  {
+    name: "Observability — Sentry / OpenTelemetry / mutation audit log",
+    why: "V1 has no Sentry, no @vercel/otel, no per-action audit log. Crisis-response gap. Lands when first paying user signs up with a real audit-trail SLA.",
+  },
+  {
+    name: "Cookie security defense-in-depth (Supabase SSR cookies)",
+    why: "Naturally N/A in V1 — no auth means no session cookies. When auth lands, force HttpOnly + Secure + SameSite=Lax at the app layer in case the upstream library default changes.",
+  },
+  {
+    name: "CI workflow with pnpm audit + typecheck + test",
+    why: "Take-home doesn't warrant the over-engineering. Lockfile is committed with sha512 integrity hashes; pnpm.onlyBuiltDependencies allowlist already neutralizes most lifecycle-script supply-chain attack patterns. Add the workflow when this repo gets external contributors.",
   },
 ]
 
