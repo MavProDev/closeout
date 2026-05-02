@@ -35,6 +35,12 @@ model Project {
   id        String      @id @default(uuid())
   name      String
   address   String
+  /// Decorative. Never written to by application code. Project status
+  /// is computed at render time from item counts (see
+  /// `computeProjectStatus` in lib/state.ts). A CHECK constraint
+  /// pinning this to 'active' is added in migration
+  /// 20260501170000_rls_and_storage_policies so any accidental write
+  /// fails loudly instead of silently producing a wrong dashboard.
   status    String      @default("active")
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt

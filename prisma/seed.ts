@@ -13,6 +13,8 @@
 
 import { PrismaClient } from "@prisma/client"
 
+import type { ItemPriority, ItemStatus } from "@/lib/state"
+
 const prisma = new PrismaClient()
 
 const PROJECT = {
@@ -24,8 +26,8 @@ const PROJECT = {
 interface SeedItem {
   location: string
   description: string
-  status: "open" | "in_progress" | "complete" | "verified"
-  priority: "low" | "normal" | "high" | "critical"
+  status: ItemStatus
+  priority: ItemPriority
   assignedTo: string | null
   photo: string | null
   completionPhoto: string | null
