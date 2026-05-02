@@ -17,8 +17,17 @@ export const metadata: Metadata = {
 // require the DB at build time, which we don't want.
 export const dynamic = "force-dynamic"
 
+// Cap the public project list to defend the demo against drive-by
+// floods. V1 has no auth and `createProject` is unrate-limited (a
+// deliberate cut); without a cap, any visitor could push the seed
+// project off the page by spamming new projects. Show only the most
+// recent 12 with a tail-truncation note when more exist.
+const HOMEPAGE_PROJECT_CAP = 12
+
 export default async function HomePage() {
-  const projects = await listProjects()
+  const all = await listProjects()
+  const projects = all.slice(0, HOMEPAGE_PROJECT_CAP)
+  const truncated = all.length - projects.length
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
@@ -99,13 +108,20 @@ export default async function HomePage() {
             {EMPTY_STATES.noProjects}
           </div>
         ) : (
-          <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {projects.map((p) => (
-              <li key={p.id}>
-                <ProjectCard project={p} />
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {projects.map((p) => (
+                <li key={p.id}>
+                  <ProjectCard project={p} />
+                </li>
+              ))}
+            </ul>
+            {truncated > 0 && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                +{truncated} older {truncated === 1 ? "project" : "projects"} not shown.
+              </p>
+            )}
+          </>
         )}
       </section>
     </div>
