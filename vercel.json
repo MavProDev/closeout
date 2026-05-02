@@ -2,17 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["iad1"],
   "buildCommand": "pnpm vercel-build",
-  "framework": "nextjs",
-  "$comments": [
-    "buildCommand intentionally does NOT run `prisma migrate deploy`.",
-    "Auto-running migrations on every preview/branch deploy means a",
-    "feature-branch PR could ship a destructive migration to the prod",
-    "DB before review (Vercel-Supabase Marketplace shares the project",
-    "across environments unless preview branches are explicitly",
-    "configured). Migrations are applied manually on push-to-main",
-    "via `pnpm db:deploy` (script in package.json). The init migration",
-    "and the RLS migration are already applied on the live Supabase",
-    "project at https://oyosbskqmhzinntiykbz.supabase.co — re-running",
-    "is idempotent (DROP POLICY IF EXISTS + CREATE)."
-  ]
+  "framework": "nextjs"
 }
