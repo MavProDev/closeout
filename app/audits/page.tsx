@@ -23,47 +23,160 @@ interface AuditRun {
   runAt: string
   totalFindings: number
   resolved: number
+  deferred: number
   frameworks: string[]
-  findings: AuditFinding[]
+  highlights: AuditFinding[]
 }
 
-// Audit data is updated by the deploy pipeline after running the
-// /fortress and /slopcheck skills. Numbers below reflect the most
-// recent run. See `audit-results/` in the repo for raw artifacts.
+// Audit data from FORTRESS run on 2026-05-01.
+// 7 squads dispatched against the codebase; 80 raw findings
+// collapsed to 32 unique after grounding + dedup. Every High that
+// was not a documented V1 cut was fixed in the same session before
+// submission. See /notes for the deferred slate and rationale.
 
 const RUNS: AuditRun[] = [
   {
     name: "Fortress",
     description:
-      "Adversarial security audit, 446 personas across 25 squads through 9 phases. Every finding requires proof-of-exploit and is mapped to multiple defense-grade standards.",
-    runAt: "Pending — runs at deploy time",
-    totalFindings: 0,
-    resolved: 0,
+      "Adversarial security audit, 7 squads (Web/API · Data · Edge Cases · Cloud · Code Quality + Vibecoder · Infrastructure · Wildcard) deployed against this codebase. Every finding required proof-of-exploit. Findings mapped to standards.",
+    runAt: "2026-05-01 (pre-submission)",
+    totalFindings: 32,
+    resolved: 22,
+    deferred: 10,
     frameworks: [
       "NIST 800-53",
       "NIST SSDF",
       "MITRE ATT&CK",
-      "MITRE ATLAS",
       "OWASP Web Top 10",
-      "OWASP LLM Top 10",
-      "OWASP Agentic Top 10",
       "CWE",
       "CVSS 4.0",
       "DISA STIG",
-      "AIVSS",
-      "EU AI Act",
     ],
-    findings: [],
+    highlights: [
+      {
+        severity: "high",
+        title: "RLS + Storage bucket policies were not in committed migrations",
+        detail:
+          "Originally applied via Supabase Management API at provisioning time. Closed by committing migration 20260501170000_rls_and_storage_policies — idempotent SQL that re-applies cleanly to either the live project or any fresh provision.",
+        resolution:
+          "Fixed — RLS, storage bucket constraints (public-read, 10MB cap, MIME whitelist), storage RLS policies, and Project.status CHECK constraint all committed.",
+      },
+      {
+        severity: "high",
+        title:
+          "Stored XSS chain via filename extension trust on /api/upload",
+        detail:
+          "Storage path was derived from user-supplied filename. Combined with bucket policies missing from migrations (above), a fresh provision was vulnerable to claiming mime=image/jpeg + filename=evil.html to land arbitrary HTML in the public bucket.",
+        resolution:
+          "Fixed — extension now derived from the validated MIME type (image/jpeg → .jpg, etc.). User filename is ignored for path construction.",
+      },
+      {
+        severity: "high",
+        title:
+          "BOLA / IDOR — Server Actions accepted itemId without project scope",
+        detail:
+          "transitionStatus, assignWorker, softDeleteItem operated on whatever item matched, with no projectId verification. UUIDs are unguessable but enumerable on the public site.",
+        resolution:
+          "Fixed — all four mutating actions now require projectId in their input schema and scope every WHERE clause to (id, projectId). Forged-cross-project itemIds are rejected.",
+      },
+      {
+        severity: "high",
+        title:
+          "No security response headers (CSP / HSTS / X-Frame-Options / Referrer-Policy / Permissions-Policy)",
+        detail:
+          "Default Next.js headers provide minimal defense-in-depth; no CSP meant any future HTML injection was unmitigated.",
+        resolution:
+          "Fixed — next.config.ts now emits a strict CSP, X-Content-Type-Options nosniff, HSTS preload, Referrer-Policy strict-origin-when-cross-origin, and a Permissions-Policy that restricts camera/microphone/geolocation.",
+      },
+      {
+        severity: "high",
+        title: "next/image hostname wildcard `*.supabase.co` too broad",
+        detail:
+          "Allowed proxying any Supabase tenant's bucket through the closeout origin — cost amplification + cache poisoning vector.",
+        resolution:
+          "Fixed — pinned to the configured project hostname only, derived from NEXT_PUBLIC_SUPABASE_URL at build time.",
+      },
+      {
+        severity: "medium",
+        title:
+          "Optimistic-concurrency had a TOCTOU window when a transition also reassigned the worker",
+        detail:
+          "transitionStatus read existing.assignedTo, then UPDATE'd. A concurrent assignWorker landing in between could be silently overwritten.",
+        resolution:
+          "Fixed — read + update now run inside prisma.$transaction with SELECT ... FOR UPDATE on the row.",
+      },
+      {
+        severity: "medium",
+        title:
+          "softDeleteItem and assignWorker did not filter `deletedAt: null`",
+        detail:
+          "Soft-deleted items could be re-deleted (overwriting deletion timestamp) or reassigned (mutating audit-trail rows post-deletion).",
+        resolution:
+          "Fixed — both actions now use updateMany with deletedAt:null in WHERE and reject with count===0.",
+      },
+      {
+        severity: "medium",
+        title: "Photo URL field accepted any host",
+        detail:
+          "z.string().url() with no allowlist. Audit-trail records could be polluted with attacker-controlled URLs (tracker pixels, foreign hosts).",
+        resolution:
+          "Fixed — Zod refinement enforces https + the configured Supabase Storage host + the /storage/v1/object/public/ path prefix.",
+      },
+      {
+        severity: "medium",
+        title:
+          "Error boundary and /api/upload echoed `error.message` to clients",
+        detail:
+          "Prisma/Supabase/runtime error text could fingerprint backend services and reveal internal config to an unauthenticated probe.",
+        resolution:
+          "Fixed — error.tsx renders only a constant message + opaque digest. /api/upload returns a constant message and logs the real error server-side.",
+      },
+      {
+        severity: "medium",
+        title:
+          "vercel-build ran prisma migrate deploy on every preview deploy",
+        detail:
+          "Vercel-Supabase Marketplace shares the project across environments; a feature-branch migration could ship to prod before review.",
+        resolution:
+          "Fixed — vercel-build now skips migrate; a separate vercel-build-with-migrate script is reserved for explicit post-merge runs. Migrations are idempotent so re-application is safe.",
+      },
+      {
+        severity: "low",
+        title:
+          "trimmedNonEmpty allowed null bytes, control chars, RTL override, zero-width unicode",
+        detail:
+          "Free-text fields could be polluted with display-spoofing characters that render invisibly or flip text direction in audit-trail exports.",
+        resolution:
+          "Fixed — Zod schema now NFC-normalizes and rejects forbidden char classes.",
+      },
+      {
+        severity: "low",
+        title:
+          "Prisma `query` log level in dev included parameter values (PII risk)",
+        detail:
+          "Worker names and free-text descriptions appeared in dev terminal — leak surface for screenshots, screen-shares, and CI logs.",
+        resolution:
+          "Fixed — dev log level reduced to warn+error; query-level logs disabled.",
+      },
+      {
+        severity: "info",
+        title:
+          "10 lower-severity items deliberately deferred to V2 with documented rationale",
+        detail:
+          "Rate limiting, private bucket + signed read URLs, observability/Sentry, CI workflow, heic2any replacement, et al. — see /notes for each item with its first-principles reasoning.",
+      },
+    ],
   },
   {
     name: "Slopcheck",
     description:
-      "Correctness, legitimacy, and AI-slop pattern audit. Verifies the code does what it claims, every claim has evidence, and there are no smell-of-AI shortcuts (TODOs, fake error handling, simulated success).",
-    runAt: "Pending — runs at deploy time",
+      "Correctness, legitimacy, and AI-slop pattern audit — the second of the two custom audit frameworks. Verifies that claims match code, that error handling is honest, and that no AI shortcuts ship to production.",
+    runAt: "Pending — runs after Fortress findings settle",
     totalFindings: 0,
     resolved: 0,
+    deferred: 0,
     frameworks: ["Closeout slop-pattern catalog v1"],
-    findings: [],
+    highlights: [],
   },
 ]
 
@@ -102,18 +215,21 @@ export default function AuditsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
       <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-        Continuous adversarial audit
+        Adversarial audit, pre-submission
       </p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
         Audits
       </h1>
       <p className="mt-3 max-w-2xl text-muted-foreground">
-        Every deploy of this app runs through two custom audit
-        frameworks: <strong className="text-foreground">Fortress</strong>{" "}
-        for security and{" "}
+        Before this app shipped, I ran it through two custom audit
+        frameworks I built:{" "}
+        <strong className="text-foreground">Fortress</strong> for
+        adversarial security and{" "}
         <strong className="text-foreground">Slopcheck</strong> for
-        correctness and AI-slop detection. Findings are mapped to
-        defense-grade standards. The latest run summaries are below.
+        correctness and AI-slop detection. The dispassionate observation:
+        running my own framework on my own work is the cheapest way to
+        catch what I would otherwise miss. Findings, mappings, and the
+        fixed-vs-deferred slate are below.
       </p>
 
       {RUNS.map((run) => (
@@ -122,7 +238,8 @@ export default function AuditsPage() {
             <div>
               <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
                 <span className="grid h-6 w-6 place-items-center rounded-md bg-secondary">
-                  {run.totalFindings === run.resolved ? (
+                  {run.totalFindings === run.resolved + run.deferred &&
+                  run.totalFindings > 0 ? (
                     <ShieldCheck
                       className="h-3.5 w-3.5"
                       style={{ color: "var(--color-status-verified)" }}
@@ -149,18 +266,12 @@ export default function AuditsPage() {
           <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label="Findings" value={run.totalFindings.toString()} />
             <Stat
-              label="Resolved"
+              label="Fixed"
               value={`${run.resolved}/${run.totalFindings}`}
             />
             <Stat
-              label="Status"
-              value={
-                run.totalFindings === run.resolved && run.totalFindings > 0
-                  ? "Clean"
-                  : run.totalFindings === 0
-                    ? "Pending"
-                    : "Open"
-              }
+              label="Deferred"
+              value={`${run.deferred}/${run.totalFindings}`}
             />
             <Stat label="Frameworks" value={run.frameworks.length.toString()} />
           </dl>
@@ -181,9 +292,9 @@ export default function AuditsPage() {
             </ul>
           </div>
 
-          {run.findings.length > 0 && (
+          {run.highlights.length > 0 && (
             <ul className="mt-4 space-y-2">
-              {run.findings.map((f, i) => {
+              {run.highlights.map((f, i) => {
                 const style = SEVERITY_STYLE[f.severity]
                 return (
                   <li
@@ -209,7 +320,7 @@ export default function AuditsPage() {
                         style={{ color: "var(--color-status-verified)" }}
                       >
                         <CheckCircle2 className="h-3 w-3" />
-                        Resolved: {f.resolution}
+                        {f.resolution}
                       </p>
                     )}
                   </li>
@@ -221,11 +332,11 @@ export default function AuditsPage() {
       ))}
 
       <p className="mt-8 text-xs text-muted-foreground">
-        Both Fortress and Slopcheck are open-source frameworks built by
-        the same engineer who built this app — so the auditor and the
-        author are the same person, but the artifacts speak for
-        themselves: every finding includes proof-of-exploit, not just a
-        category label.
+        Both Fortress and Slopcheck are open-source frameworks I built —
+        so the auditor and the author are the same person. The artifacts
+        speak for themselves: every fix is in commit history, every
+        deferred item has documented reasoning on /notes, and the
+        repository is public.
       </p>
     </div>
   )

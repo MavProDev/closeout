@@ -232,6 +232,46 @@ export default function BuildNotesPage() {
         </ol>
       </Section>
 
+      <Section
+        title="Audit pass — what surfaced, what got fixed, what got documented"
+        icon={<ShieldCheck className="h-4 w-4" />}
+      >
+        <p>
+          After V1 was deployable, the codebase ran through{" "}
+          <Link href="/audits" className="text-primary underline-offset-4 hover:underline">
+            FORTRESS
+          </Link>
+          {" "}— a 7-squad adversarial audit framework I built. 80 raw findings
+          across the squads collapsed to 32 unique after deduplication and
+          grounding checks. Every Critical and High that wasn&apos;t a
+          documented V1 cut got fixed in the same session before submission.
+        </p>
+        <p>
+          The fixed slate covers: security headers (CSP / HSTS /
+          X-Content-Type-Options / Permissions-Policy / Referrer-Policy),
+          BOLA scope on every Server Action, RLS + Storage bucket policies
+          committed as a Prisma migration (closing the reproducibility gap
+          where they only lived in the live Supabase project), filename
+          extension derived from validated MIME instead of user-supplied
+          filename (closes a stored-XSS chain), photo URL host allowlist,
+          unicode hygiene on free-text inputs, optimistic-concurrency
+          row-lock via Postgres FOR UPDATE, env-driven canonical URL,
+          Prisma log-level scrubbed of parameter values, error boundary
+          and /api/upload no longer echoing internal error messages,
+          singleton service-role client, dead code removed
+          (`createServerSupabase`), home-page project list capped at 12
+          to defend the demo against drive-by floods.
+        </p>
+        <p>
+          The documented-but-not-fixed slate is itself signal —
+          first-principles, dV/dt: V1 demo on free tier with synthetic
+          data does not need rate limiting, observability, or a private
+          bucket today. See the{" "}
+          <strong className="text-foreground">deferred</strong> list above
+          for each item with its V2 plan.
+        </p>
+      </Section>
+
       <div className="mt-10 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
         <p>
           Source:{" "}
