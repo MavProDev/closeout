@@ -56,12 +56,16 @@ describe("VALID_TRANSITIONS", () => {
 })
 
 describe("canTransition", () => {
-  it("allows every legal transition", () => {
-    for (const from of ITEM_STATUSES) {
-      for (const to of VALID_TRANSITIONS[from]) {
-        expect(canTransition(from, to)).toBe(true)
-      }
-    }
+  // Hardcoded legal transitions — these assert the SPEC, not the
+  // shape of VALID_TRANSITIONS. If lib/state.ts is changed to allow
+  // a different transition, these tests must be updated explicitly.
+  it("allows every legal transition (hardcoded spec)", () => {
+    expect(canTransition("open", "in_progress")).toBe(true)
+    expect(canTransition("in_progress", "complete")).toBe(true)
+    expect(canTransition("in_progress", "open")).toBe(true)
+    expect(canTransition("complete", "verified")).toBe(true)
+    expect(canTransition("complete", "in_progress")).toBe(true)
+    expect(canTransition("verified", "in_progress")).toBe(true)
   })
 
   it("forbids open -> complete (the spec's three-state shortcut)", () => {
@@ -84,10 +88,14 @@ describe("canTransition", () => {
 })
 
 describe("nextStatuses", () => {
-  it("matches VALID_TRANSITIONS for each state", () => {
-    for (const from of ITEM_STATUSES) {
-      expect(nextStatuses(from)).toEqual(VALID_TRANSITIONS[from])
-    }
+  // Hardcoded spec — does not reference VALID_TRANSITIONS so a change
+  // to the state machine fails this test instead of tautologically
+  // passing.
+  it("returns hardcoded expected list for each status", () => {
+    expect(nextStatuses("open")).toEqual(["in_progress"])
+    expect(nextStatuses("in_progress")).toEqual(["complete", "open"])
+    expect(nextStatuses("complete")).toEqual(["verified", "in_progress"])
+    expect(nextStatuses("verified")).toEqual(["in_progress"])
   })
 })
 

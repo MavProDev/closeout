@@ -1,9 +1,9 @@
-import { CheckCircle2, Clock, ImageIcon, MapPin, User } from "lucide-react"
-import Image from "next/image"
+import { CheckCircle2, Clock, MapPin, User } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { AssignWorkerInline } from "@/components/punch-list/assign-worker-inline"
+import { ItemPhoto } from "@/components/punch-list/item-photo"
 import {
   PriorityPill,
   StatusPill,
@@ -80,8 +80,19 @@ export default async function ItemDetailPage({ params }: PageProps) {
       </header>
 
       <section className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <ItemPhoto src={item.photo} label="Defect" />
-        <ItemPhoto src={item.completionPhoto} label="Completion" accent />
+        <ItemPhoto
+          src={item.photo}
+          label="Defect"
+          sizes="(max-width: 768px) 100vw, 400px"
+          className="aspect-[4/3] surface"
+        />
+        <ItemPhoto
+          src={item.completionPhoto}
+          label="Completion"
+          accent
+          sizes="(max-width: 768px) 100vw, 400px"
+          className="aspect-[4/3] surface"
+        />
       </section>
 
       <section className="surface mt-6 p-5">
@@ -146,46 +157,6 @@ export default async function ItemDetailPage({ params }: PageProps) {
           <Link href={`/projects/${item.project.id}`}>← Back to project</Link>
         </Button>
       </div>
-    </div>
-  )
-}
-
-function ItemPhoto({
-  src,
-  label,
-  accent,
-}: {
-  src: string | null
-  label: string
-  accent?: boolean
-}) {
-  return (
-    <div className="surface relative aspect-[4/3] overflow-hidden">
-      {src ? (
-        <Image
-          src={src}
-          alt={`${label} photo`}
-          fill
-          sizes="(max-width: 768px) 100vw, 400px"
-          className="object-cover"
-        />
-      ) : (
-        <div className="grid h-full place-items-center text-muted-foreground">
-          <div className="flex flex-col items-center gap-2">
-            <ImageIcon className="h-8 w-8" />
-            <span className="text-xs">No {label.toLowerCase()} photo</span>
-          </div>
-        </div>
-      )}
-      <span
-        className={
-          accent
-            ? "pointer-events-none absolute left-2 top-2 rounded-sm bg-[color:var(--color-status-verified)]/15 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-[color:var(--color-status-verified)] backdrop-blur"
-            : "pointer-events-none absolute left-2 top-2 rounded-sm bg-background/70 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur"
-        }
-      >
-        {label}
-      </span>
     </div>
   )
 }

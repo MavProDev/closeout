@@ -4,7 +4,12 @@ import { useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 
-export default function GlobalError({
+// Renders for any segment-level error inside the app router (not the
+// global root error — for that, see app/global-error.tsx if it exists).
+// Next.js conventionally invokes this as the boundary's default
+// export when an unhandled exception bubbles out of a Server
+// Component or Server Action.
+export default function RouteError({
   error,
   reset,
 }: {

@@ -1,11 +1,12 @@
 "use client"
 
-import { CheckCircle2, ImageIcon, Trash2, User } from "lucide-react"
-import Image from "next/image"
+import { CheckCircle2, Trash2, User } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import * as React from "react"
 import { toast } from "sonner"
+
+import { ItemPhoto } from "@/components/punch-list/item-photo"
 
 import {
   PriorityPill,
@@ -79,6 +80,7 @@ export function ItemCard({ item, className }: ItemCardProps) {
           <ItemPhoto
             src={item.photo}
             label="Defect"
+            sizes="(max-width: 640px) 50vw, 200px"
             className="aspect-[4/3] sm:aspect-square sm:h-32 sm:w-32"
           />
           {showCompletion && (
@@ -86,6 +88,7 @@ export function ItemCard({ item, className }: ItemCardProps) {
               src={item.completionPhoto}
               label="Fix"
               accent
+              sizes="(max-width: 640px) 50vw, 200px"
               className="aspect-[4/3] sm:aspect-square sm:h-32 sm:w-32"
             />
           )}
@@ -162,51 +165,6 @@ export function ItemCard({ item, className }: ItemCardProps) {
         </div>
       </div>
     </article>
-  )
-}
-
-function ItemPhoto({
-  src,
-  label,
-  accent,
-  className,
-}: {
-  src: string | null
-  label: string
-  accent?: boolean
-  className?: string
-}) {
-  return (
-    <div
-      className={cn(
-        "relative overflow-hidden bg-secondary/40",
-        className,
-      )}
-    >
-      {src ? (
-        <Image
-          src={src}
-          alt={`${label} photo`}
-          fill
-          sizes="(max-width: 640px) 50vw, 200px"
-          className="object-cover"
-        />
-      ) : (
-        <div className="grid h-full place-items-center text-muted-foreground">
-          <ImageIcon className="h-6 w-6" />
-        </div>
-      )}
-      <span
-        className={cn(
-          "pointer-events-none absolute left-1.5 top-1.5 rounded-sm px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider backdrop-blur",
-          accent
-            ? "bg-[color:var(--color-status-verified)]/15 text-[color:var(--color-status-verified)]"
-            : "bg-background/70 text-muted-foreground",
-        )}
-      >
-        {label}
-      </span>
-    </div>
   )
 }
 

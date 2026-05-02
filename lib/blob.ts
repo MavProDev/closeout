@@ -9,19 +9,13 @@ import { createAdminSupabase, STORAGE_BUCKET } from "@/lib/supabase"
  * and keeps photo bytes off the Server Action codepath.
  */
 
-const ALLOWED_MIME = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/heic",
-  "image/heif",
-])
 const MAX_BYTES = 10 * 1024 * 1024 // 10 MB
 
 // Storage path extensions are derived from the validated MIME, NEVER
 // from the user-supplied filename. This blocks an attacker from
 // claiming mime=image/jpeg but supplying filename="evil.html" to get
-// a `<uuid>.html` storage path served as text/html.
+// a `<uuid>.html` storage path served as text/html. ALLOWED_MIME is
+// derived from MIME_TO_EXT keys so the two cannot drift.
 const MIME_TO_EXT: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -29,6 +23,7 @@ const MIME_TO_EXT: Record<string, string> = {
   "image/heic": "heic",
   "image/heif": "heif",
 }
+const ALLOWED_MIME = new Set(Object.keys(MIME_TO_EXT))
 
 export interface SignedUploadResponse {
   signedUrl: string
@@ -41,12 +36,9 @@ export async function createPhotoUpload(
   _filename: string,
   mime: string,
 ): Promise<SignedUploadResponse> {
-  if (!ALLOWED_MIME.has(mime)) {
-    throw new Error(`Unsupported photo MIME type: ${mime}`)
-  }
   const ext = MIME_TO_EXT[mime]
   if (!ext) {
-    throw new Error(`No extension mapping for MIME: ${mime}`)
+    throw new Error(`Unsupported photo MIME type: ${mime}`)
   }
   const supabase = createAdminSupabase()
   const path = `${crypto.randomUUID()}.${ext}`

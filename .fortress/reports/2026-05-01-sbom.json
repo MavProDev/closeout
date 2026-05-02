@@ -1,0 +1,56 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:5b4f4d8c-7a9d-4e2c-8b1c-abcdef012345",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-05-01T15:50:25Z",
+    "tools": [
+      { "vendor": "FORTRESS", "name": "fortress", "version": "1.0.0" }
+    ],
+    "component": {
+      "type": "application",
+      "name": "closeout",
+      "version": "0.1.0",
+      "description": "Punch list tracker for the RestoreFast Deployment Engineer take-home."
+    }
+  },
+  "components": [
+    { "type": "library", "name": "@prisma/client", "version": "^6.19.2", "scope": "required", "license": "Apache-2.0" },
+    { "type": "library", "name": "@supabase/ssr", "version": "^0.10.2", "scope": "required", "license": "MIT" },
+    { "type": "library", "name": "@supabase/supabase-js", "version": "^2.49.0", "scope": "required", "license": "MIT" },
+    { "type": "library", "name": "browser-image-compression", "version": "^2.0.2", "scope": "required", "license": "MIT" },
+    { "type": "library", "name": "class-variance-authority", "version": "^0.7.1", "scope": "required", "license": "Apache-2.0" },
+    { "type": "library", "name": "clsx", "version": "^2.1.1", "scope": "required", "license": "MIT" },
+    { "type": "library", "name": "heic2any", "version": "0.0.4", "scope": "required", "license": "MIT" },
+    { "type": "library", "name": "lucide-react", "version": "^1.14.0", "scope": "required", "license": "ISC" },
+    { "type": "library", "name": "next", "version": "16.2.4", "scope": "required", "license": "MIT" },
+    { "type": "library", "name": "next-themes", "version": "^0.4.6", "scope": "required", "license": "MIT" },
+    { "type": "library", "name": "radix-ui", "version": "^1.4.3", "scope": "required", "license": "MIT" },
+    { "type": "library", "name": "react", "version": "19.2.4", "scope": "required", "license": "MIT" },
+    { "type": "library", "name": "react-dom", "version": "19.2.4", "scope": "required", "license": "MIT" },
+    { "type": "library", "name": "sonner", "version": "^2.0.0", "scope": "required", "license": "MIT" },
+    { "type": "library", "name": "tailwind-merge", "version": "^3.0.0", "scope": "required", "license": "MIT" },
+    { "type": "library", "name": "zod", "version": "^4.0.0", "scope": "required", "license": "MIT" },
+    { "type": "library", "name": "@tailwindcss/postcss", "version": "^4", "scope": "optional", "license": "MIT" },
+    { "type": "library", "name": "@types/node", "version": "^22", "scope": "optional", "license": "MIT" },
+    { "type": "library", "name": "@types/react", "version": "^19", "scope": "optional", "license": "MIT" },
+    { "type": "library", "name": "@types/react-dom", "version": "^19", "scope": "optional", "license": "MIT" },
+    { "type": "library", "name": "eslint", "version": "^9", "scope": "optional", "license": "MIT" },
+    { "type": "library", "name": "eslint-config-next", "version": "16.2.4", "scope": "optional", "license": "MIT" },
+    { "type": "library", "name": "prisma", "version": "^6.19.2", "scope": "optional", "license": "Apache-2.0" },
+    { "type": "library", "name": "tailwindcss", "version": "^4", "scope": "optional", "license": "MIT" },
+    { "type": "library", "name": "tsx", "version": "^4.19.0", "scope": "optional", "license": "MIT" },
+    { "type": "library", "name": "tw-animate-css", "version": "^1.2.0", "scope": "optional", "license": "MIT" },
+    { "type": "library", "name": "typescript", "version": "^5", "scope": "optional", "license": "Apache-2.0" },
+    { "type": "library", "name": "vitest", "version": "^3.0.0", "scope": "optional", "license": "MIT" }
+  ],
+  "metadata.lockfile": {
+    "type": "pnpm",
+    "filename": "pnpm-lock.yaml",
+    "hash": "hash-not-computed",
+    "all_pinned": true,
+    "git_dependencies": false,
+    "file_dependencies": false
+  }
+}

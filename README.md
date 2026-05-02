@@ -43,7 +43,7 @@ Stripe, and Twilio are deliberately out of V1 scope (see
 
 ## What I added to the schema (and why)
 
-The original RestoreFast field names are preserved exactly. Four field
+The original RestoreFast field names are preserved exactly. Six field
 extensions and three indexes turn the model from CRUD into a workflow tool.
 
 | Addition | Reason |
@@ -90,26 +90,34 @@ and the only thing that gets unit tests.
 
 ## Server actions
 
-All mutations are Server Actions with **optimistic concurrency**. The
-critical bit lives in `lib/actions/items.ts:transitionStatus`:
+All mutations are Server Actions with **optimistic concurrency** and a
+row-level transaction lock. The critical bit lives in
+`lib/actions/items.ts:transitionStatus`:
 
 ```ts
-const result = await prisma.punchItem.updateMany({
-  where: {
-    id: itemId,
-    status: fromStatus,            // expected current status
-    assignedTo: existing.assignedTo, // expected current assignee
-    deletedAt: null,
-  },
-  data: { status: toStatus, ...effects },
+const result = await prisma.$transaction(async (tx) => {
+  const existing = await tx.$queryRaw<...>`
+    SELECT "assignedTo", "deletedAt", "projectId"
+    FROM "PunchItem"
+    WHERE "id" = ${itemId}
+    FOR UPDATE
+  `
+  // existence + project-scope + assignee-presence checks ...
+  return tx.punchItem.updateMany({
+    where: { id: itemId, projectId, status: fromStatus, deletedAt: null },
+    data: { status: toStatus, ...effects },
+  })
 })
 if (result.count === 0) {
   return { ok: false, error: VALIDATION_ERRORS.staleState }
 }
 ```
 
-Two foremen on the same item in different tabs cannot race. The second
-transition fails atomically and the user is told to refresh.
+Two foremen on the same item in different tabs cannot race. The
+`SELECT ... FOR UPDATE` inside the transaction holds a row lock; the
+second transaction blocks until the first commits, then sees the new
+status and fails the optimistic-concurrency `WHERE status = fromStatus`
+check, returning `staleState` to the user.
 
 ## Run locally
 
