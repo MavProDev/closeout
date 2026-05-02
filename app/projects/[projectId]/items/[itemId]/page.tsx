@@ -4,11 +4,8 @@ import { notFound } from "next/navigation"
 
 import { AssignWorkerInline } from "@/components/punch-list/assign-worker-inline"
 import { ItemPhoto } from "@/components/punch-list/item-photo"
-import {
-  PriorityPill,
-  StatusPill,
-} from "@/components/punch-list/status-pill"
-import { TransitionDialog } from "@/components/punch-list/transition-dialog"
+import { PriorityPill } from "@/components/punch-list/status-pill"
+import { StatusPillTrigger } from "@/components/punch-list/status-pill-trigger"
 import { Button } from "@/components/ui/button"
 import { prisma } from "@/lib/prisma"
 import { STATUS_LABELS } from "@/lib/copy"
@@ -66,16 +63,12 @@ export default async function ItemDetailPage({ params }: PageProps) {
         </div>
         <div className="flex items-center gap-2">
           <PriorityPill priority={priority} />
-          <TransitionDialog
+          <StatusPillTrigger
             projectId={item.project.id}
             itemId={item.id}
-            currentStatus={status}
+            status={status}
             hasAssignee={Boolean(item.assignedTo)}
-          >
-            {(open) => (
-              <StatusPill status={status} interactive onClick={open} />
-            )}
-          </TransitionDialog>
+          />
         </div>
       </header>
 
