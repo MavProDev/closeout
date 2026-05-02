@@ -296,6 +296,23 @@ export default function BuildNotesPage() {
         </p>
       </Section>
 
+      <Section
+        title="Human signature"
+        icon={<CheckCircle2 className="h-4 w-4" style={{ color: "var(--color-gold)" }} />}
+      >
+        <p>
+          The Krusty Krab demo carries 12 punch items. Eleven are
+          straight construction-defect language with the joke
+          hiding in the project name and item locations. The
+          twelfth is mine, by hand: an unauthorized employee-built
+          structure inside the walk-in cooler, blocked egress,
+          scattered product, a top-secret-labeled crate. Reads as
+          a real defect on the first pass. Pays off on the second.
+          Every AI-built submission needs a place where the human
+          built something the AI couldn&apos;t — this is mine.
+        </p>
+      </Section>
+
       <div className="mt-10 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
         <p>
           Source:{" "}

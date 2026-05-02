@@ -156,6 +156,22 @@ const ITEMS: SeedItem[] = [
     completionPhoto: null,
     daysAgo: 4,
   },
+  {
+    // The human-touch item — Ian shot this one himself as a signature
+    // on an otherwise AI-built submission. Reads as a real construction
+    // defect (unauthorized employee-built structure inside food storage,
+    // blocked egress, scattered product, code violations) with the
+    // franchise jokes hiding for the second look.
+    location: "Walk-In Cooler, north corner",
+    description:
+      "Unauthorized employee-built wooden structure inside walk-in storage; improper construction blocking egress, caution tape from a prior incident, scattered food product on floor indicating sanitation breach. Top-secret-labeled crate stored without inventory chain documentation. Demo, sanitize, and reconcile inventory before next health inspection.",
+    status: "open",
+    priority: "critical",
+    assignedTo: null,
+    photo: "/seed/12-defect.png",
+    completionPhoto: null,
+    daysAgo: 0,
+  },
 ]
 
 const HOUR = 60 * 60 * 1000
