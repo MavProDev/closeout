@@ -319,7 +319,7 @@ const RUNS: AuditRun[] = [
       {
         severity: "info",
         title:
-          "6 positive findings — restoration vocabulary, test count, abstraction claim, RSC fix, RestoreFast cleanup all verified",
+          "6 positive findings — restoration vocabulary, test count, abstraction claim, RSC fix, audience-tilt cleanup all verified",
         detail:
           "Restoration vocabulary (LGR dehumidifier, psychrometric log, anti-microbial chain-of-custody, vapor-barrier seam, Cat 2 water-loss framing, microbial strip-test + containment plan) is industry-correct, not hallucinated. README and /notes claim of 29 vitest tests still holds (vitest run confirms). The four-state-machine claim on /notes is supported by lib/state.ts's pure-functions design. StatusPillTrigger has no logic duplication. No stray TODO/FIXME/console-debug introduced. Take-home origin remains explicit but no specific company is named anywhere in code, copy, or docs.",
       },
