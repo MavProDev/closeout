@@ -48,3 +48,13 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# Local Claude Code state
+.claude/
+
+# Image-generation prompt tables (working notes — not part of the
+# shipped app). Anything matching is ignored so future batches stay
+# out of the repo by default.
+*photo-prompts*.md
+westgate-photo-prompts-*.md
+krusty-krab-photo-prompts*.md
