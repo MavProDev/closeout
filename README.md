@@ -208,7 +208,7 @@ Features I'd ship in V2, ordered by user-impact-per-engineering-hour:
 Claude Opus 4.7 for planning. Claude Code for execution. Eight override
 moments captured live in the build journal — the four most representative
 are published on
-[/notes](https://closeout-murex.vercel.app/notes#override-moments-where-the-human-caught-the-ai).
+[/overrides](https://closeout-murex.vercel.app/overrides).
 
 ## License
 
